@@ -1,48 +1,61 @@
-var Game = {
-	display: null, 
-	map: {},
+var map_data = [
+	"################################     ",
+	"#@......#..............#.......#     ",
+	"#.......#.......#......#.......#     ",
+	"#....####.......#..............######",
+	"#....#..........#......#............#",
+	"#...............#......#............#",
+	"#....#....#######......########.....#",
+	"#....#..........#####..#............#",
+	"#....#.................#............#",
+	"#####################################"
+];
 
-	init: function() {
-		this.display = new ROT.Display();
-		document.body.appendChild(this.display.getContainer());
 
-		this._generateMap();
-	},
+var Game = (function () {
+	var MAP_WIDTH = 80;
+	var MAP_HEIGHT = 25;
+	var display = null;
+	var map = [];
+	var tiles = {
+		'#': { walkable: false, ch: '#' },
+		'.': { walkable: true, ch: '.'},
+		' ': { walkable: false, ch: ' '}
+	};
+	var player_pos = {x: 1, y: 1};
 
-	_generateMap: function() {
-		var digger = new ROT.Map.Digger();
-
-		var freeCells = [];
-
-		var digCallback = function(x, y, value) {
-			if (value) return;
-
-			var key = x + ',' + y;
-			freeCells.push(key);
-			this.map[key] = '.';
-		};
-
-		digger.create(digCallback.bind(this));
-
-		this._generateBoxes(freeCells);
-
-		this._drawWholeMap();
-	},
-
-	_generateBoxes: function(cells) {
-		for (var i = 0; i < 10; i++) {
-			var index = Math.floor(ROT.RNG.getUniform() * cells.length);
-			this.map[cells[index]] = '*';
-			cells.splice(index, 1);
+	var loadMap = function (data) {
+		for (var y = 0; y < MAP_HEIGHT; y++) {
+			map.push([]);
+			for (var x = 0; x < MAP_WIDTH; x++) {
+				tile = (data[y] || [])[x] || ' ';
+				if (tile == '@') {
+					player_pos = { x: x, y: y };
+					tile = '.';
+				}
+				map[y].push(tiles[tile]);
+			}
 		}
-	},
+	};
 
-	_drawWholeMap: function() {
-		for (var key in this.map) {
-			var parts = key.split(',');
-			var x = parseInt(parts[0]);
-			var y = parseInt(parts[1]);
-			this.display.draw(x, y, this.map[key]);
-		}
-	}
-};
+	var drawWholeMap = function() {
+		for (var y = 0; y < MAP_HEIGHT; y++) 
+			for (var x = 0; x < MAP_WIDTH; x++) 
+				display.draw(x, y, map[y][x].ch);
+
+		display.draw(player_pos.x, player_pos.y, '@');
+	};
+
+	var init = function() {
+		display = new ROT.Display();
+		document.body.appendChild(display.getContainer());
+
+		loadMap(map_data);
+		drawWholeMap();
+	};
+
+	return {
+		init: init
+	};
+})();;
+
