@@ -1,14 +1,29 @@
 var map_data = [
-	"################################     ",
-	"#@......#..............#.......#     ",
-	"#.......#.......#......#.......#     ",
-	"#....####.......#..............######",
-	"#....#..........#......#............#",
-	"#...............#......#............#",
-	"#....#....#######......########.....#",
-	"#....#..........#####..#............#",
-	"#....#.................#............#",
-	"#####################################"
+  ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+	",################################,    ",
+	",#@......#..............#.......#,    ",
+	",#.......#.......#......#.......#,,,,,,",
+	",#....####.......#..............######,",
+	",#....#..........#......#............#,",
+	",#...............#......#............#,",
+	",#....#....#######......########.....#,",
+	",#....#..........#####..#............#,",
+	",#....#.................#............#,",
+	",######################.##############,",
+	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                ,,,,,,,          ,,,,,,,",
+	"                                                       ,#####,          ,#####,",
+	"                                                       ,#...#,          ,#...#,",
+	"                                                       ,#...#,          ,#...#,",
+	"                                                       ,#...#,,,,,,,,,,,,#...#,",
+	"                                                       ,#...#.############...#,",
+	"                                                       ,#....................#,",
+	"                                                       ,######################,",
+	"               ,,,,,,,,,,,,,,,,,,,,,                   ,,,,,,,,,,,,,,,,,,,,,,,,",
+	"                #############.#####                                            ",
+	"               ,#.................#,",                     
+	"               ,#.................#,",
+	"               ,###################,",
+	"               ,,,,,,,,,,,,,,,,,,,,,",
 ];
 
 var Util = {
@@ -28,7 +43,13 @@ var Game = (function () {
 	var tiles = {
 		'#': { walkable: false, ch: '#' },
 		'.': { walkable: true, ch: '.'},
-		' ': { walkable: false, ch: ' '}
+		' ': { walkable: true, slide: true, ch: ' '},
+		',': { walkable: true, ch: ' '}
+	};
+
+	var sleep = function(time, cb) {
+		engine.lock();
+		setTimeout(function () { engine.unlock(); if (cb) cb(); }, time);
 	};
 
 	var waitForKey = function(cb) {
@@ -50,6 +71,8 @@ var Game = (function () {
 		move_key[40] = { x: 0, y: 1 };
 		move_key[37] = { x: -1, y: 0 };
 
+		var last_dir = { x: 1, y: 0 };
+
 		var teleport = function (new_x, new_y) {
 			x = new_x;
 			y = new_y;
@@ -60,24 +83,38 @@ var Game = (function () {
 		};
 
 		var move = function (dir) {
-			var new_x = Util.clamp(x + (dir.x || 0), 0, MAP_WIDTH - 1);
-			var new_y = Util.clamp(y + (dir.y || 0), 0, MAP_HEIGHT - 1);
+			var new_x = x + (dir.x || 0);
+			var new_y = y + (dir.y || 0);
+			if (new_x < 0 || new_x >= MAP_WIDTH ||
+					new_y < 0 || new_y >= MAP_HEIGHT) {
+				alert("You are dead. And off the map. And stuff.");
+				location.reload();
+			}
 
-			if (map[new_y][new_x].walkable)
+			if (map[new_y][new_x].walkable) {
+				last_dir = dir;
 				teleport(new_x, new_y);
+			}
 		};
 
 		var act = function () {
-			waitForKey(function (e) {
-				var key = e.keyCode;
-				if (key in move_key) {
-					move(move_key[key]);
-				} else {
-					return false;
-				}
-				Game.drawWholeMap();
-				return true;
-			});
+			if (map[y][x].slide) {
+				sleep(300, function () {
+					move(last_dir);
+					Game.drawWholeMap();
+				});
+			} else {
+				waitForKey(function (e) {
+					var key = e.keyCode;
+					if (key in move_key) {
+						move(move_key[key]);
+					} else {
+						return false;
+					}
+					Game.drawWholeMap();
+					return true;
+				});
+			}
 		};
 
 		return {
@@ -86,7 +123,7 @@ var Game = (function () {
 			act: act,
 			draw: draw,
 		};
-	})();
+	})(1, 1);
 
 	var loadMap = function (data) {
 		for (var y = 0; y < MAP_HEIGHT; y++) {
