@@ -41,10 +41,11 @@ var Game = (function () {
 	var engine = new ROT.Engine(scheduler);
 	var map = [];
 	var tiles = {
-		'#': { walkable: false, ch: '#' },
-		'.': { walkable: true, ch: '.'},
-		' ': { walkable: true, slide: true, ch: ' '},
-		',': { walkable: true, ch: ' '}
+		'#': { name: '#', walkable: false, ch: '#' },
+		'.': { name: '.', walkable: true, ch: '.'},
+		' ': { name: ' ', walkable: true, slide: true, ch: ' '},
+		',': { name: ',', walkable: true, ch: ' '},
+		'*': { name: '*', walkable: true, slide: true, ch: '*', col: '#066'},
 	};
 
 	var sleep = function(time, cb) {
@@ -64,12 +65,49 @@ var Game = (function () {
 		window.addEventListener('keydown', listener);
 	};
 
+	var sparkle = (function (star_count) {
+		var stars = [];
+
+		var addStar = function() {
+			while (true) {
+				var x = Math.floor(ROT.RNG.getUniform() * MAP_WIDTH);
+				var y = Math.floor(ROT.RNG.getUniform() * MAP_HEIGHT);
+				if (map[y][x].name == ' ') {
+					map[y][x] = tiles['*'];
+					stars.push({ x: x, y: y});
+					break;
+				}
+			}
+		};
+
+		var removeStar = function(id) {
+			map[stars[id].y][stars[id].x] = tiles[' '];
+			stars.splice(id, 1);
+		};
+
+		var act = function() {
+			if (!stars.length)
+				for (var i = 0; i < star_count; i++)
+					addStar();
+
+			if (ROT.RNG.getUniform() > 0.85) {
+				var remove = Math.floor(ROT.RNG.getUniform() * stars.length);
+				removeStar(remove);
+				addStar();
+			}
+		};
+
+		return {
+			act: act
+		};
+	})(20);
+
 	var player = (function (x, y) {
 		var move_key = {};
-		move_key[38] = { x: 0, y: -1 };
-		move_key[39] = { x: 1, y: 0 };
-		move_key[40] = { x: 0, y: 1 };
-		move_key[37] = { x: -1, y: 0 };
+		move_key[ROT.VK_UP] = { x: 0, y: -1 };
+		move_key[ROT.VK_RIGHT] = { x: 1, y: 0 };
+		move_key[ROT.VK_DOWN] = { x: 0, y: 1 };
+		move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 
 		var last_dir = { x: 1, y: 0 };
 
@@ -79,7 +117,7 @@ var Game = (function () {
 		};
 
 		var draw = function () {
-			display.draw(x, y, '@', '#0ff');
+			display.draw(x, y, '@', '#3f3');
 		};
 
 		var move = function (dir) {
@@ -141,8 +179,10 @@ var Game = (function () {
 
 	var drawWholeMap = function() {
 		for (var y = 0; y < MAP_HEIGHT; y++) 
-			for (var x = 0; x < MAP_WIDTH; x++) 
-				display.draw(x, y, map[y][x].ch);
+			for (var x = 0; x < MAP_WIDTH; x++) {
+				var tile = map[y][x];
+				display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
+			}
 
 		player.draw();
 	};
@@ -152,8 +192,10 @@ var Game = (function () {
 		document.body.appendChild(display.getContainer());
 
 		loadMap(map_data);
+		sparkle.act();
 		drawWholeMap();
 		scheduler.add(player, true);
+		scheduler.add(sparkle, true);
 		engine.start();
 	};
 
