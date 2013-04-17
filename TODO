@@ -1,7 +1,13 @@
+BUGS:
+ - Enemies can steer in space
+ - Many characters can inhabit one tile
+
+Features:
  o SPAAAAAACE!
  - Diagonal movement
- - Enemies
-   - Some sort of common codebase, too. Like move()
+ o Enemies
+   o Some sort of common codebase, too. Like move()
+	 - Better AI (Scatter mode? Depends on gameplay decisions...)
  - Shooting! Lasers! ZAP ZAP!
  - Destructable terrain
  - Air pressure     m (_ _) m

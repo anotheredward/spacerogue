@@ -1,11 +1,11 @@
 var map_data = [
   ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
 	",################################,    ",
-	",#@......#..............#.......#,    ",
+	",#@......#..............#..g....#,    ",
 	",#.......#.......#......#.......#,,,,,,",
 	",#....####.......#..............######,",
 	",#....#..........#......#............#,",
-	",#...............#......#............#,",
+	",#...............#..g...#............#,",
 	",#....#....#######......########.....#,",
 	",#....#..........#####..#............#,",
 	",#....#.................#............#,",
@@ -16,11 +16,11 @@ var map_data = [
 	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,,,,,,,,,,,,#...#,",
 	"                                                       ,#...#.############...#,",
-	"                                                       ,#....................#,",
+	"                                                       ,#...........g........#,",
 	"                                                       ,######################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,                   ,,,,,,,,,,,,,,,,,,,,,,,,",
-	"                #############.#####                                            ",
-	"               ,#.................#,",                     
+	"               ,#############.#####,                                           ",
+	"               ,#g................#,",                     
 	"               ,#.................#,",
 	"               ,###################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,",
@@ -30,6 +30,12 @@ var Util = {
 	clamp: function(val, min, max) {
 		return val < min ? min : val > max ? max : val;
 	}
+};
+
+Number.prototype.sign = function () {
+	return this > 0 ? 1 :
+	       this < 0 ? -1 :
+				 0;
 };
 
 
@@ -47,6 +53,8 @@ var Game = (function () {
 		',': { name: ',', walkable: true, ch: ' '},
 		'*': { name: '*', walkable: true, slide: true, ch: '*', col: '#066'},
 	};
+
+	var enemies = [];
 
 	var sleep = function(time, cb) {
 		engine.lock();
@@ -102,22 +110,17 @@ var Game = (function () {
 		};
 	})(20);
 
-	var player = (function (x, y) {
-		var move_key = {};
-		move_key[ROT.VK_UP] = { x: 0, y: -1 };
-		move_key[ROT.VK_RIGHT] = { x: 1, y: 0 };
-		move_key[ROT.VK_DOWN] = { x: 0, y: 1 };
-		move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
-
-		var last_dir = { x: 1, y: 0 };
+	var makeCharacter = (function (x, y, ch, col) {
 
 		var teleport = function (new_x, new_y) {
 			x = new_x;
 			y = new_y;
 		};
 
+		var last_dir = { x: 1, y: 0 };
+
 		var draw = function () {
-			display.draw(x, y, '@', '#3f3');
+			display.draw(x, y, ch || '@', col || '#3f3');
 		};
 
 		var move = function (dir) {
@@ -126,42 +129,77 @@ var Game = (function () {
 			if (new_x < 0 || new_x >= MAP_WIDTH ||
 					new_y < 0 || new_y >= MAP_HEIGHT) {
 				alert("You are dead. And off the map. And stuff.");
+				engine.lock();
 				location.reload();
 			}
 
 			if (map[new_y][new_x].walkable) {
 				last_dir = dir;
 				teleport(new_x, new_y);
-			}
-		};
-
-		var act = function () {
-			if (map[y][x].slide) {
-				sleep(300, function () {
-					move(last_dir);
-					Game.drawWholeMap();
-				});
-			} else {
-				waitForKey(function (e) {
-					var key = e.keyCode;
-					if (key in move_key) {
-						move(move_key[key]);
-					} else {
-						return false;
-					}
-					Game.drawWholeMap();
-					return true;
-				});
+				return true;
 			}
 		};
 
 		return {
 			teleport: teleport,
 			move: move,
-			act: act,
 			draw: draw,
+			x: function () { return x; },
+			y: function () { return y; },
+			last_dir: function () { return last_dir; },
 		};
+	});
+
+	var player = (function (x, y) {
+			var base = makeCharacter(x, y);
+
+			var move_key = {};
+			move_key[ROT.VK_UP] = { x: 0, y: -1 };
+			move_key[ROT.VK_RIGHT] = { x: 1, y: 0 };
+			move_key[ROT.VK_DOWN] = { x: 0, y: 1 };
+			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
+
+			base.act = function() {
+				Game.drawWholeMap();
+				if (map[base.y()][base.x()].slide) {
+					base.move(base.last_dir());
+					sleep(300);
+				} else {
+					waitForKey(function (e) {
+						var key = e.keyCode;
+						if (key in move_key) {
+							base.move(move_key[key]);
+						} else {
+							return false;
+						}
+						return true;
+					});
+				}
+			};
+
+			return base;
 	})(1, 1);
+
+	var makeEnemy = (function (x, y) {
+		var base = makeCharacter(x, y, 'g', '#f00');
+		var turn = 0;
+
+		base.act = function () {
+			if (turn) {
+				turn = 0;
+				return;
+			}
+			var xdiff = player.x() - base.x();
+			var ydiff = player.y() - base.y();
+
+			if (!base.move({x: xdiff.sign(), y: ydiff.sign()})) 
+				if (!base.move({x: 0, y: ydiff.sign()}))
+					base.move({x: xdiff.sign(), y: 0});
+			turn++;
+		};
+
+		return base;
+	});
 
 	var loadMap = function (data) {
 		for (var y = 0; y < MAP_HEIGHT; y++) {
@@ -171,7 +209,11 @@ var Game = (function () {
 				if (tile == '@') {
 					player.teleport(x, y);
 					tile = '.';
+				} else if (tile == 'g') {
+					enemies.push(makeEnemy(x, y));
+					tile = '.';
 				}
+
 				map[y].push(tiles[tile]);
 			}
 		}
@@ -185,6 +227,9 @@ var Game = (function () {
 			}
 
 		player.draw();
+		for (var key in enemies)
+			if (enemies.hasOwnProperty(key))
+				enemies[key].draw();
 	};
 
 	var init = function() {
@@ -196,6 +241,11 @@ var Game = (function () {
 		drawWholeMap();
 		scheduler.add(player, true);
 		scheduler.add(sparkle, true);
+		for (var enemyId in enemies) {
+			if (!enemies.hasOwnProperty(enemyId))
+				continue;
+			scheduler.add(enemies[enemyId], true);
+		}
 		engine.start();
 	};
 
