@@ -105,9 +105,13 @@ var Game = (function () {
 	var player = (function (x, y) {
 		var move_key = {};
 		move_key[ROT.VK_UP] = { x: 0, y: -1 };
+        move_key[ROT.VK_PAGE_UP] = { x: 1, y: -1 };
 		move_key[ROT.VK_RIGHT] = { x: 1, y: 0 };
+        move_key[ROT.VK_PAGE_DOWN] = { x: 1, y: 1 };
 		move_key[ROT.VK_DOWN] = { x: 0, y: 1 };
+        move_key[ROT.VK_END] = { x: -1, y: 1 };
 		move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
+        move_key[ROT.VK_HOME] = { x: -1, y: -1 };
 
 		var last_dir = { x: 1, y: 0 };
 
