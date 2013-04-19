@@ -111,13 +111,22 @@ var Game = (function () {
 	})(20);
 
 	var makeCharacter = (function (x, y, ch, col) {
+		var move_key = {};
+		move_key[ROT.VK_UP] = { x: 0, y: -1 };
+        move_key[ROT.VK_PAGE_UP] = { x: 1, y: -1 };
+		move_key[ROT.VK_RIGHT] = { x: 1, y: 0 };
+        move_key[ROT.VK_PAGE_DOWN] = { x: 1, y: 1 };
+		move_key[ROT.VK_DOWN] = { x: 0, y: 1 };
+        move_key[ROT.VK_END] = { x: -1, y: 1 };
+		move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
+        move_key[ROT.VK_HOME] = { x: -1, y: -1 };
+
+		var last_dir = { x: 1, y: 0 };
 
 		var teleport = function (new_x, new_y) {
 			x = new_x;
 			y = new_y;
 		};
-
-		var last_dir = { x: 1, y: 0 };
 
 		var draw = function () {
 			display.draw(x, y, ch || '@', col || '#3f3');
