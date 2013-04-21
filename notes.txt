@@ -1,0 +1,19 @@
+21/04/2013
+What' the most fun for the least effort
+Implementing the verbs, the most cohesive actions/items(one with the most interesting interactions)
+But with the least dependencies, eg: Not doors because they depend on air pressure/power 
+Features that work well with what the game has currently, but don't require other new systems to exist, small steps
+
+Lowest hanging fruit:
+FOV:Blanking out inside of space stations, why? Because it adds the verb discover
+Lasers: Adds the verb laser, produces interesting behaviour when combined with almost all other elements
+Gold: Adds treasure, motivation etc.
+Status window: Colour text is awesome
+
+Characters defined by traits eg: Bounty Hunter:Gets gold for kiling enemies
+, combination of character flavour text and difference in behaviour
+
+Meta:
+Unlock items, traits, areas after every game
+
+Mouse as interface, but keyboard is the primary input method
