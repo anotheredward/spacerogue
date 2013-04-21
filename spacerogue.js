@@ -55,6 +55,7 @@ var Game = (function () {
 	};
 
 	var enemies = [];
+	var characters = [];
 
 	var sleep = function(time, cb) {
 		engine.lock();
@@ -110,6 +111,21 @@ var Game = (function () {
 		};
 	})(20);
 
+	var tileWalkable = function(x, y, who) {
+		if (!map[y][x].walkable)
+			return false;
+
+		for (var key in characters) {
+			if (characters.hasOwnProperty(key)) {
+				var ch = characters[key];
+				if (ch.x() == x && ch.y() == y)
+					return false;
+			}
+		}
+
+		return true;
+	};
+
 	var makeCharacter = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
 
@@ -132,7 +148,7 @@ var Game = (function () {
 				location.reload();
 			}
 
-			if (map[new_y][new_x].walkable) {
+			if (tileWalkable(new_x, new_y)) {
 				last_dir = dir;
 				teleport(new_x, new_y);
 				return true;
@@ -161,6 +177,7 @@ var Game = (function () {
 			move_key[ROT.VK_END] = { x: -1, y: 1 };
 			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 			move_key[ROT.VK_HOME] = { x: -1, y: -1 };
+			move_key[ROT.VK_PERIOD] = { x: 0, y: 0 };
 
 			base.act = function() {
 				Game.drawWholeMap();
@@ -211,9 +228,12 @@ var Game = (function () {
 				tile = (data[y] || [])[x] || ' ';
 				if (tile == '@') {
 					player.teleport(x, y);
+					characters.push(player);
 					tile = '.';
 				} else if (tile == 'g') {
-					enemies.push(makeEnemy(x, y));
+					var enemy = makeEnemy(x, y);
+					enemies.push(enemy);
+					characters.push(enemy);
 					tile = '.';
 				}
 
@@ -229,10 +249,9 @@ var Game = (function () {
 				display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
 			}
 
-		player.draw();
-		for (var key in enemies)
-			if (enemies.hasOwnProperty(key))
-				enemies[key].draw();
+		for (var key in characters)
+			if (characters.hasOwnProperty(key))
+				characters[key].draw();
 	};
 
 	var init = function() {

@@ -1,14 +1,18 @@
 BUGS:
+ - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
  - Enemies can steer in space
- - Many characters can inhabit one tile
+ o Many characters can inhabit one tile
+ - Enemies can trap you in space.
+   - Fix by letting you push off people in space (grappling)
 
 Features:
  o SPAAAAAACE!
- - Diagonal movement
+ o Diagonal movement
  o Enemies
    o Some sort of common codebase, too. Like move()
 	 - Better AI (Scatter mode? Depends on gameplay decisions...)
  - Shooting! Lasers! ZAP ZAP!
+ - Field of View
  - Destructable terrain
  - Air pressure     m (_ _) m
  - Status window
