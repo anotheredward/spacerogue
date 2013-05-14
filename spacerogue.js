@@ -1,4 +1,5 @@
 var map_data = [
+
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
 	",################################,    ",
 	",#@......#..............#..g....#,    ",
@@ -112,6 +113,9 @@ var Game = (function () {
 	})(20);
 
 	var tileWalkable = function(x, y, who) {
+		if (!map[y] || !map[y][x])
+			return false;
+
 		if (!map[y][x].walkable)
 			return false;
 
@@ -178,6 +182,7 @@ var Game = (function () {
 			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 			move_key[ROT.VK_HOME] = { x: -1, y: -1 };
 			move_key[ROT.VK_PERIOD] = { x: 0, y: 0 };
+			base.zapMode = false;
 
 			base.act = function() {
 				Game.drawWholeMap();
@@ -187,18 +192,41 @@ var Game = (function () {
 				} else {
 					waitForKey(function (e) {
 						var key = e.keyCode;
-						if (key in move_key) {
-							base.move(move_key[key]);
-						} else {
+						if (!base.zapMode) {
+							if (key in move_key) {
+								base.move(move_key[key]);
+							} else {
+								if(key === ROT.VK_Z)
+									base.zapMode = true;
+								return false;
+							}
+							return true;
+						} else if (key in move_key) {
+							base.zapMode = false;
+							dir = move_key[key];
+							laz = new lazer(base.x() + dir.x, base.y() + dir.y, dir);
+							characters.push(laz);
+							scheduler.add(laz);
 							return false;
 						}
-						return true;
 					});
 				}
 			};
 
 			return base;
 	})(1, 1);
+
+	var lazer = (function(x, y, dir) {
+		var base = makeCharacter(x, y, '-', '#f00');
+		scheduler.add(base,  true);
+		base.last_dir = dir;
+
+		base.act = function() {
+			base.move(base.last_dir);
+		};
+
+		return base;
+	});
 
 	var makeEnemy = (function (x, y) {
 		var base = makeCharacter(x, y, 'g', '#f00');
