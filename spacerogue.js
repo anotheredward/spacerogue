@@ -2,9 +2,9 @@ var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
 	",################################,    ",
-	",#@......#..............#.......#,    ",
+	",#@......#....g.........#.......#,    ",
 	",#.......#.......#......#.......#,,,,,,",
-	",#....####.......#..............######,",
+	",#....####.......#..g...........######,",
 	",#....#..........#......#............#,",
 	",#...............#......#............#,",
 	",#....#....#######......########.....#,",
@@ -17,11 +17,11 @@ var map_data = [
 	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,,,,,,,,,,,,#...#,",
 	"                                                       ,#...#.############...#,",
-	"                                                       ,#....................#,",
+	"                                                       ,#....g...............#,",
 	"                                                       ,######################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,                   ,,,,,,,,,,,,,,,,,,,,,,,,",
 	"               ,#############.#####,                                           ",
-	"               ,#.................#,",                     
+	"               ,#.....g...........#,",
 	"               ,#.................#,",
 	"               ,###################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,",
@@ -119,16 +119,22 @@ var Game = (function () {
 		if (!map[y][x].walkable)
 			return false;
 
-		for (var key in entities) {
-			if (entities.hasOwnProperty(key)) {
-				var ch = entities[key];
-				if (ch.x() == x && ch.y() == y)
-					return false;
-			}
-		}
+		if (getEntityAtPosition(x, y) != null)
+			return false;
 
 		return true;
 	};
+
+	var getEntityAtPosition = function(x, y) {
+		for (var key in entities) {
+			if (entities.hasOwnProperty(key)) {
+				var entity = entities[key];
+				if (entity.x() == x && entity.y() == y)
+					return entity;
+			}
+		}
+		return null;
+	}
 
 	var makeEntity = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
@@ -227,7 +233,13 @@ var Game = (function () {
 		base.last_dir = dir;
 
 		base.act = function() {
-			base.move(base.last_dir);
+			if(!base.move(base.last_dir)){
+				for(var i=0; i < entities.length; i++) {
+					if (entities[i].x == base.x && entities[i].y == base.y)
+						entities.splice(i,1);
+				}
+				scheduler.remove(base);	
+			}
 		};
 
 		return base;
