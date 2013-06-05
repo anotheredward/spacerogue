@@ -2,11 +2,11 @@ var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
 	",################################,    ",
-	",#@......#..............#..g....#,    ",
+	",#@......#..............#.......#,    ",
 	",#.......#.......#......#.......#,,,,,,",
 	",#....####.......#..............######,",
 	",#....#..........#......#............#,",
-	",#...............#..g...#............#,",
+	",#...............#......#............#,",
 	",#....#....#######......########.....#,",
 	",#....#..........#####..#............#,",
 	",#....#.................#............#,",
@@ -17,11 +17,11 @@ var map_data = [
 	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,,,,,,,,,,,,#...#,",
 	"                                                       ,#...#.############...#,",
-	"                                                       ,#...........g........#,",
+	"                                                       ,#....................#,",
 	"                                                       ,######################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,                   ,,,,,,,,,,,,,,,,,,,,,,,,",
 	"               ,#############.#####,                                           ",
-	"               ,#g................#,",                     
+	"               ,#.................#,",                     
 	"               ,#.................#,",
 	"               ,###################,",
 	"               ,,,,,,,,,,,,,,,,,,,,,",
@@ -56,7 +56,7 @@ var Game = (function () {
 	};
 
 	var enemies = [];
-	var characters = [];
+	var entities = [];
 
 	var sleep = function(time, cb) {
 		engine.lock();
@@ -119,9 +119,9 @@ var Game = (function () {
 		if (!map[y][x].walkable)
 			return false;
 
-		for (var key in characters) {
-			if (characters.hasOwnProperty(key)) {
-				var ch = characters[key];
+		for (var key in entities) {
+			if (entities.hasOwnProperty(key)) {
+				var ch = entities[key];
 				if (ch.x() == x && ch.y() == y)
 					return false;
 			}
@@ -130,7 +130,7 @@ var Game = (function () {
 		return true;
 	};
 
-	var makeCharacter = (function (x, y, ch, col) {
+	var makeEntity = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
 
 		var teleport = function (new_x, new_y) {
@@ -142,16 +142,14 @@ var Game = (function () {
 			display.draw(x, y, ch || '@', col || '#3f3');
 		};
 
-		var move = function (dir) {
+		var move = function (dir, exitMapAttempt) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
 			if (new_x < 0 || new_x >= MAP_WIDTH ||
-					new_y < 0 || new_y >= MAP_HEIGHT) {
-				alert("You are dead. And off the map. And stuff.");
-				engine.lock();
-				location.reload();
-			}
-
+				new_y < 0 || new_y >= MAP_HEIGHT) {
+					if (exitMapAttempt)
+						exitMapAttempt();
+			}	
 			if (tileWalkable(new_x, new_y)) {
 				last_dir = dir;
 				teleport(new_x, new_y);
@@ -169,8 +167,14 @@ var Game = (function () {
 		};
 	});
 
+	var killPlayer = function() {
+		alert("You are dead. And off the map. And stuff.");
+		engine.lock();
+		location.reload();
+	}
+
 	var player = (function (x, y) {
-			var base = makeCharacter(x, y);
+			var base = makeEntity(x, y);
 
 			var move_key = {};
 			move_key[ROT.VK_UP] = { x: 0, y: -1 };
@@ -187,7 +191,7 @@ var Game = (function () {
 			base.act = function() {
 				Game.drawWholeMap();
 				if (map[base.y()][base.x()].slide) {
-					base.move(base.last_dir());
+					base.move(base.last_dir(), killPlayer);
 					sleep(300);
 				} else {
 					waitForKey(function (e) {
@@ -205,7 +209,7 @@ var Game = (function () {
 							base.zapMode = false;
 							dir = move_key[key];
 							laz = new lazer(base.x() + dir.x, base.y() + dir.y, dir);
-							characters.push(laz);
+							entities.push(laz);
 							scheduler.add(laz);
 							return false;
 						}
@@ -217,8 +221,9 @@ var Game = (function () {
 	})(1, 1);
 
 	var lazer = (function(x, y, dir) {
-		var base = makeCharacter(x, y, '-', '#f00');
+		var base = makeEntity(x, y, '-', '#f00', false);
 		scheduler.add(base,  true);
+		display.draw(x, y, '-', '#f00');
 		base.last_dir = dir;
 
 		base.act = function() {
@@ -229,7 +234,7 @@ var Game = (function () {
 	});
 
 	var makeEnemy = (function (x, y) {
-		var base = makeCharacter(x, y, 'g', '#f00');
+		var base = makeEntity(x, y, 'g', '#f00');
 		var turn = 0;
 
 		base.act = function () {
@@ -256,12 +261,12 @@ var Game = (function () {
 				tile = (data[y] || [])[x] || ' ';
 				if (tile == '@') {
 					player.teleport(x, y);
-					characters.push(player);
+					entities.push(player);
 					tile = '.';
 				} else if (tile == 'g') {
 					var enemy = makeEnemy(x, y);
 					enemies.push(enemy);
-					characters.push(enemy);
+					entities.push(enemy);
 					tile = '.';
 				}
 
@@ -277,9 +282,9 @@ var Game = (function () {
 				display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
 			}
 
-		for (var key in characters)
-			if (characters.hasOwnProperty(key))
-				characters[key].draw();
+		for (var key in entities)
+			if (entities.hasOwnProperty(key))
+				entities[key].draw();
 	};
 
 	var init = function() {
