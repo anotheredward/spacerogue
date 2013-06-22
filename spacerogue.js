@@ -192,36 +192,41 @@ var Game = (function () {
 			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 			move_key[ROT.VK_HOME] = { x: -1, y: -1 };
 			move_key[ROT.VK_PERIOD] = { x: 0, y: 0 };
-			base.zapMode = false;
+			base.mode = "move";
 
 			base.act = function() {
 				Game.drawWholeMap();
 				if (map[base.y()][base.x()].slide) {
 					base.move(base.last_dir(), killPlayer);
 					sleep(300);
-				} else {
+				} 
+				else {
 					waitForKey(function (e) {
 						var key = e.keyCode;
-						if (!base.zapMode) {
-							if (key in move_key) {
-								base.move(move_key[key]);
-							} else {
-								if(key === ROT.VK_Z)
-									base.zapMode = true;
-								return false;
-							}
-							return true;
-						} else if (key in move_key) {
-							base.zapMode = false;
-							dir = move_key[key];
-							laz = new lazer(base.x() + dir.x, base.y() + dir.y, dir);
-							entities.push(laz);
-							scheduler.add(laz);
-							return false;
+						if (base.mode === "zap") {
+							base.zap(key);
+							base.mode = "move";
+						} 
+						else if(key === ROT.VK_Z) {
+								base.mode = "zap";
 						}
+						else if (base.mode === "move") {
+							base.move(move_key[key]);
+							return true;
+						}
+					return false;
 					});
 				}
 			};
+
+			base.zap = function(key) {
+				if (key in move_key) {
+					dir = move_key[key];
+					laz = new lazer(base.x() + dir.x, base.y() + dir.y, dir);
+					entities.push(laz);
+					scheduler.add(laz);
+				}
+			}
 
 			return base;
 	})(1, 1);
