@@ -148,13 +148,13 @@ var Game = (function () {
 			display.draw(x, y, ch || '@', col || '#3f3');
 		};
 
-		var move = function (dir, exitMapAttempt) {
+		var move = function (dir) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
 			if (new_x < 0 || new_x >= MAP_WIDTH ||
 				new_y < 0 || new_y >= MAP_HEIGHT) {
-					if (exitMapAttempt)
-						exitMapAttempt();
+					if (this.onExitMap)
+						this.onExitMap();
 			}	
 			if (tileWalkable(new_x, new_y)) {
 				last_dir = dir;
@@ -172,12 +172,6 @@ var Game = (function () {
 			last_dir: function () { return last_dir; },
 		};
 	});
-
-	var killPlayer = function() {
-		alert("You are dead. And off the map. And stuff.");
-		engine.lock();
-		location.reload();
-	}
 
 	var player = (function (x, y) {
 			var base = makeEntity(x, y);
@@ -197,7 +191,7 @@ var Game = (function () {
 			base.act = function() {
 				Game.drawWholeMap();
 				if (map[base.y()][base.x()].slide) {
-					base.move(base.last_dir(), killPlayer);
+					base.move(base.last_dir());
 					sleep(300);
 				} 
 				else {
@@ -219,6 +213,12 @@ var Game = (function () {
 				}
 			};
 
+			base.onExitMap = function() {
+				alert("You are dead. And off the map. And stuff.");
+				engine.lock();
+				location.reload();
+			}
+
 			base.zap = function(key) {
 				if (key in move_key) {
 					dir = move_key[key];
@@ -232,7 +232,7 @@ var Game = (function () {
 	})(1, 1);
 
 	var lazer = (function(x, y, dir) {
-		var base = makeEntity(x, y, '-', '#f00', false);
+		var base = makeEntity(x, y, '-', '#f00');
 		scheduler.add(base,  true);
 		display.draw(x, y, '-', '#f00');
 		base.last_dir = dir;
