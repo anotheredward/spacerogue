@@ -246,15 +246,20 @@ var Game = (function () {
 	var lazer = (function(x, y, dir) {
 		var base = makeEntity(x, y, '-', '#f00');
 		scheduler.add(base,  true);
-		//display.draw(x, y, '-', '#f00');
+		//display.draw(x, y, '-', '#f00'); Hack shows lazer when it is first created, but it moves two spaces on its first move
 		base.last_dir = dir;
 
 		base.act = function() {
 			if(!base.move(base.last_dir)){
 				var lazeredEntity = getEntityAtPosition(base.x() + base.last_dir.x, base.y() + base.last_dir.y);
-				if (lazeredEntity && lazeredEntity.onLazered)
-					lazeredEntity.onLazered();
-
+				if (lazeredEntity) {
+					if (lazeredEntity.onLazered)
+						lazeredEntity.onLazered();
+				}
+				else {
+					//Wall collision, walls should probably be entities of some sort
+						map[base.y() + base.last_dir.y][base.x() + base.last_dir.x] = tiles['.'];
+				}
 				for(var i=0; i < entities.length; i++) {
 					if (entities[i].x == base.x && entities[i].y == base.y)
 						entities.splice(i,1);
