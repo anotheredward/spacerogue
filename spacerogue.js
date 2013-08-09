@@ -2,7 +2,7 @@ var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
 	",################################,    ",
-	",#@......#....g.........#.......#,    ",
+	",#@...........g.........#.......#,    ",
 	",#.......#.......#......#.......#,,,,,,",
 	",#....####.......#..g...........######,",
 	",#....#..........#......#............#,",
@@ -138,6 +138,7 @@ var Game = (function () {
 
 	var makeEntity = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
+		var color = col;
 
 		var teleport = function (new_x, new_y) {
 			x = new_x;
@@ -145,7 +146,11 @@ var Game = (function () {
 		};
 
 		var draw = function () {
-			display.draw(x, y, ch || '@', col || '#3f3');
+			display.draw(x, y, ch || '@', color || '#3f3');
+		};
+
+		var setColor = function (col) {
+			color = col; 
 		};
 
 		var move = function (dir) {
@@ -170,6 +175,7 @@ var Game = (function () {
 			x: function () { return x; },
 			y: function () { return y; },
 			last_dir: function () { return last_dir; },
+			setColor: setColor,
 		};
 	});
 
@@ -239,6 +245,10 @@ var Game = (function () {
 
 		base.act = function() {
 			if(!base.move(base.last_dir)){
+				var lazeredEntity = getEntityAtPosition(base.x() + base.last_dir.x, base.y() + base.last_dir.y);
+				if (lazeredEntity && lazeredEntity.onLazered)
+					lazeredEntity.onLazered();
+
 				for(var i=0; i < entities.length; i++) {
 					if (entities[i].x == base.x && entities[i].y == base.y)
 						entities.splice(i,1);
@@ -252,11 +262,16 @@ var Game = (function () {
 
 	var makeEnemy = (function (x, y) {
 		var base = makeEntity(x, y, 'g', '#f00');
-		var turn = 0;
+		var turns_until_move = 0;
+
+		base.onLazered = function() { 
+			turns_until_move = 2;
+			base.setColor("blue");
+		}
 
 		base.act = function () {
-			if (turn) {
-				turn = 0;
+			if (turns_until_move > 0) {
+				turns_until_move -= 1;
 				return;
 			}
 			var xdiff = player.x() - base.x();
@@ -265,7 +280,8 @@ var Game = (function () {
 			if (!base.move({x: xdiff.sign(), y: ydiff.sign()})) 
 				if (!base.move({x: 0, y: ydiff.sign()}))
 					base.move({x: xdiff.sign(), y: 0});
-			turn++;
+			turns_until_move++;
+			base.setColor("#f00");
 		};
 
 		return base;

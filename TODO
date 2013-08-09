@@ -6,6 +6,7 @@ BUGS:
    - Fix by letting you push off people in space (grappling)
 
 Features:
+Prototype:
  o SPAAAAAACE!
  o Diagonal movement
  o Enemies
@@ -13,7 +14,17 @@ Features:
 	 - Better AI (Scatter mode? Depends on gameplay decisions...)
  - Shooting! Lasers! ZAP ZAP!
  - Field of View
+ - Gold
+
+If game is fun:
  - Destructable terrain
  - Air pressure     m (_ _) m
  - Status window
  - Brainstorm!
+
+Thoughts on entities in the game: 
+	The current core of an entity is which mode it is in
+	Modes decide behaviour, how it draws, how it affects others
+	Modes, imo, should be how we communicate between the behaviour and presentation layers
+	The drawing layer decides how to present the current state of any object
+	The logic layer decides how an object behaves given its state
