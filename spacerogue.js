@@ -139,6 +139,7 @@ var Game = (function () {
 	var makeEntity = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
 		var color = col;
+		var character = ch;
 
 		var teleport = function (new_x, new_y) {
 			x = new_x;
@@ -146,13 +147,17 @@ var Game = (function () {
 		};
 
 		var draw = function () {
-			display.draw(x, y, ch || '@', color || '#3f3');
+			display.draw(x, y, character || '@', color || '#3f3');
 		};
 
 		var setColor = function (col) {
 			color = col; 
 		};
 
+		var setChar = function (ch) {
+			character = ch; 
+
+		};
 		var move = function (dir) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
@@ -176,6 +181,7 @@ var Game = (function () {
 			y: function () { return y; },
 			last_dir: function () { return last_dir; },
 			setColor: setColor,
+			setChar: setChar,
 		};
 	});
 
@@ -240,7 +246,7 @@ var Game = (function () {
 	var lazer = (function(x, y, dir) {
 		var base = makeEntity(x, y, '-', '#f00');
 		scheduler.add(base,  true);
-		display.draw(x, y, '-', '#f00');
+		//display.draw(x, y, '-', '#f00');
 		base.last_dir = dir;
 
 		base.act = function() {
@@ -263,25 +269,46 @@ var Game = (function () {
 	var makeEnemy = (function (x, y) {
 		var base = makeEntity(x, y, 'g', '#f00');
 		var turns_until_move = 0;
+		var state = "hunting";
 
 		base.onLazered = function() { 
-			turns_until_move = 2;
-			base.setColor("blue");
+			turns_until_move = 5;
+			base.setDisplayStunned();
+			state = "stunned";
 		}
 
 		base.act = function () {
 			if (turns_until_move > 0) {
 				turns_until_move -= 1;
-				return;
 			}
-			var xdiff = player.x() - base.x();
-			var ydiff = player.y() - base.y();
+			else {
+				state = "hunting";
 
-			if (!base.move({x: xdiff.sign(), y: ydiff.sign()})) 
-				if (!base.move({x: 0, y: ydiff.sign()}))
-					base.move({x: xdiff.sign(), y: 0});
-			turns_until_move++;
+				var xdiff = player.x() - base.x();
+				var ydiff = player.y() - base.y();
+
+				if (!base.move({x: xdiff.sign(), y: ydiff.sign()})) 
+					if (!base.move({x: 0, y: ydiff.sign()}))
+						base.move({x: xdiff.sign(), y: 0});
+				turns_until_move++;
+			}
+
+			if (state === "stunned") {
+				base.setDisplayStunned();
+			}
+			else {
+				base.setDisplayDefault();
+			}
+		};
+
+		base.setDisplayStunned = function () { 
+			base.setColor("blue");
+			base.setChar(turns_until_move.toString());
+		};
+		
+		base.setDisplayDefault = function () { 
 			base.setColor("#f00");
+			base.setChar("g");
 		};
 
 		return base;
