@@ -384,16 +384,32 @@ var Game = (function () {
 		}
 	};
 
-	var drawWholeMap = function() {
-		for (var y = 0; y < MAP_HEIGHT; y++) 
-			for (var x = 0; x < MAP_WIDTH; x++) {
+	var drawTile = function(x, y) {
+		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
+			return false;
+
+			var possibleEntity = getEntityAtPosition(x, y);
+			if (possibleEntity)
+				possibleEntity.draw();
+			else {
 				var tile = map[y][x];
 				display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
 			}
+	}
 
-		for (var key in entities)
-			if (entities.hasOwnProperty(key))
-				entities[key].draw();
+	var doesTileLetLightPass = function(x, y) {
+		//Defensive check, callback sometimes asks for negative indicies
+		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
+			return false;
+
+	 	return map[y][x].ch != '#';
+	};
+
+	var drawWholeMap = function() {
+		display.clear();
+		var fov = new ROT.FOV.PreciseShadowcasting(doesTileLetLightPass);
+
+		fov.compute(player.x(), player.y(), 50, drawTile);
 	};
 
 	var init = function() {

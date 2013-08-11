@@ -19,20 +19,25 @@ Prototype:
    - Use a fancy scheduler so we can actually draw intermediate laser steps.
  o Change the sprite of stunned enemies to be a countdown
  o Lasers destroy walls
- - Lasers heat up walls, cool down over a couple of turns, break on second shot
- - Gold
-  - Possible implementations:
-   - Every entity has a gold value, so enemies have a certain amount of gold, so does the player, and lastly items are worth a certain amount
-    -Touching stunned enemies steals some gold?
-   - Gold is a specific item all unto itself, I don't like this idea particularly because it increases the number of entities arbitrarily 
+   - Pushing of stunned enemies?
  - Field of View
- - Pushing of stunned enemies?
+   o Basic field of view
+   - Differentiate between not visble, unseen and space
+ - Flavour-y explainy command line text thing
+ - Sound
+    -Transition sound
+ - Mouse controls, TBT hybrid-y thing
+ - Splinter cell conviction type AI, attacks last seen position, player leaves a ghost, clear enemy LoS
+ - Gold
+   - Players + Enemies have gold
+
 
 Code:
  o Make waitForKey re-entrant (allow calling waitForKey from within its callback) (maybe with reference counting)
  o Allow specifying a timeout for waitForKey, with an optional callback if nothing (valid) is pressed in that time. 
 
 If game is fun:
+ - Lasers heat up walls, cool down over a couple of turns, break on second shot
  - Air pressure     m (_ _) m
  - Status window
  - Brainstorm!
