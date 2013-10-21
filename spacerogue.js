@@ -83,8 +83,6 @@ var Game = (function () {
 			}
 			levels++;
 			callback = cb;
-			console.log(callback);
-			console.log(levels);
 		};
 	})();
 
@@ -210,7 +208,6 @@ var Game = (function () {
 			move_key[ROT.VK_END] = { x: -1, y: 1 };
 			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 			move_key[ROT.VK_HOME] = { x: -1, y: -1 };
-			move_key[ROT.VK_PERIOD] = { x: 0, y: 0 };
 
 			base.act = function() {
 				Game.drawWholeMap();
@@ -221,15 +218,16 @@ var Game = (function () {
 				} else {
 					waitForKey(function (e) {
 						var key = e.keyCode;
+						if (key == ROT.VK_PERIOD)
+							return true;
 						if (key === ROT.VK_Z) {
 							waitForKey(function (e) {
 								return base.zap(e.keyCode);
 							});
 							return true;
-						} else if (key in move_key) {
-							return base.move(move_key[key]);
 						}
-						return false;
+						if (key in move_key)
+							return base.move(move_key[key]);
 					});
 				}
 			};
@@ -241,7 +239,7 @@ var Game = (function () {
 			}
 
 			base.zap = function(key) {
-				if (key in move_key && key != ROT.VK_PERIOD) {
+				if (key in move_key) {
 					dir = move_key[key];
 					laz = new lazer(base.x(), base.y(), dir);
 					entities.push(laz);
