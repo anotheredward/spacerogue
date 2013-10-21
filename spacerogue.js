@@ -30,15 +30,14 @@ var map_data = [
 var Util = {
 	clamp: function(val, min, max) {
 		return val < min ? min : val > max ? max : val;
-	}
+	},
 };
 
-Number.prototype.sign = function () {
+Number.prototype.sign = function() {
 	return this > 0 ? 1 :
-	       this < 0 ? -1 :
+				 this < 0 ? -1 :
 				 0;
 };
-
 
 var Game = (function () {
 	var MAP_WIDTH = 80;
@@ -63,17 +62,31 @@ var Game = (function () {
 		setTimeout(function () { engine.unlock(); if (cb) cb(); }, time);
 	};
 
-	var waitForKey = function(cb) {
+	var waitForKey = (function () {
+		var levels = 0;
+		var callback = null;
+
 		var listener = function (e) {
-			if (cb(e)) {
-				window.removeEventListener('keydown', listener);
-				engine.unlock();
+			if (callback(e)) {
+				levels--;
+				if (levels == 0) {
+					window.removeEventListener('keydown', listener);
+					engine.unlock();
+				}
 			}
 		};
 
-		engine.lock();
-		window.addEventListener('keydown', listener);
-	};
+		return function(cb) {
+			if (levels == 0) {
+				window.addEventListener('keydown', listener);
+				engine.lock();
+			}
+			levels++;
+			callback = cb;
+			console.log(callback);
+			console.log(levels);
+		};
+	})();
 
 	var sparkle = (function (star_count) {
 		var stars = [];
@@ -198,29 +211,25 @@ var Game = (function () {
 			move_key[ROT.VK_LEFT] = { x: -1, y: 0 };
 			move_key[ROT.VK_HOME] = { x: -1, y: -1 };
 			move_key[ROT.VK_PERIOD] = { x: 0, y: 0 };
-			base.mode = "move";
 
 			base.act = function() {
 				Game.drawWholeMap();
-				if (map[base.y()][base.x()].slide) {
+				var sliding = map[base.y()][base.x()].slide;
+				if (sliding) {
 					base.move(base.last_dir());
 					sleep(300);
-				} 
-				else {
+				} else {
 					waitForKey(function (e) {
 						var key = e.keyCode;
-						if (base.mode === "zap") {
-							base.zap(key);
-							base.mode = "move";
-						} 
-						else if(key === ROT.VK_Z) {
-								base.mode = "zap";
-						}
-						else if (base.mode === "move") {
-							base.move(move_key[key]);
+						if (key === ROT.VK_Z) {
+							waitForKey(function (e) {
+								return base.zap(e.keyCode);
+							});
 							return true;
+						} else if (key in move_key) {
+							return base.move(move_key[key]);
 						}
-					return false;
+						return false;
 					});
 				}
 			};
@@ -232,21 +241,25 @@ var Game = (function () {
 			}
 
 			base.zap = function(key) {
-				if (key in move_key) {
+				if (key in move_key && key != ROT.VK_PERIOD) {
 					dir = move_key[key];
-					laz = new lazer(base.x() + dir.x, base.y() + dir.y, dir);
+					laz = new lazer(base.x(), base.y(), dir);
 					entities.push(laz);
-					scheduler.add(laz);
-				}
+					return true;
+				} 
+				return false;
 			}
 
 			return base;
 	})(1, 1);
 
 	var lazer = (function(x, y, dir) {
-		var base = makeEntity(x, y, '-', '#f00');
-		scheduler.add(base,  true);
-		//display.draw(x, y, '-', '#f00'); Hack shows lazer when it is first created, but it moves two spaces on its first move
+		var sprite = dir.x == 0 ? '|' :
+								 dir.y == 0 ? '-' :
+		             dir.x.sign() == dir.y.sign() ? '\\' :
+								 '/';
+		var base = makeEntity(x, y, sprite, '#f00');
+		scheduler.add(base, true);
 		base.last_dir = dir;
 
 		base.act = function() {
@@ -258,9 +271,9 @@ var Game = (function () {
 				}
 				else {
 					//Wall collision, walls should probably be entities of some sort
-						map[base.y() + base.last_dir.y][base.x() + base.last_dir.x] = tiles['.'];
+					map[base.y() + base.last_dir.y][base.x() + base.last_dir.x] = tiles['.'];
 				}
-				for(var i=0; i < entities.length; i++) {
+				for (var i=0; i < entities.length; i++) {
 					if (entities[i].x == base.x && entities[i].y == base.y)
 						entities.splice(i,1);
 				}

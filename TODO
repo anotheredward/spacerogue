@@ -1,11 +1,12 @@
 BUGS:
- - Lazers jump a square in their first move
+ o Lazers jump a square in their first move
  - Crashes surf sometimes
  - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
  - Enemies can steer in space
  o Many characters can inhabit one tile
  - Enemies can trap you in space.
    - Fix by letting you push off people in space (grappling)
+ - Game crashes sometimes when laser leaves map (can reproduce by shooting up lots)
 
 Features:
 Prototype:
@@ -15,6 +16,7 @@ Prototype:
    o Some sort of common codebase, too. Like move()
    - Better AI (Scatter mode? Depends on gameplay decisions...)
  o Shooting! Lasers! ZAP ZAP!
+   - Use a fancy scheduler so we can actually draw intermediate laser steps.
  o Change the sprite of stunned enemies to be a countdown
  o Lasers destroy walls
  - Lasers heat up walls, cool down over a couple of turns, break on second shot
@@ -25,6 +27,9 @@ Prototype:
    - Gold is a specific item all unto itself, I don't like this idea particularly because it increases the number of entities arbitrarily 
  - Field of View
  - Pushing of stunned enemies?
+
+Code:
+ o Make waitForKey re-entrant (allow calling waitForKey from within its callback) (maybe with reference counting)
 
 If game is fun:
  - Air pressure     m (_ _) m
