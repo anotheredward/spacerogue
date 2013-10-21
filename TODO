@@ -30,6 +30,7 @@ Prototype:
 
 Code:
  o Make waitForKey re-entrant (allow calling waitForKey from within its callback) (maybe with reference counting)
+ o Allow specifying a timeout for waitForKey, with an optional callback if nothing (valid) is pressed in that time. 
 
 If game is fun:
  - Air pressure     m (_ _) m
@@ -44,3 +45,4 @@ Thoughts on entities in the game:
 	The logic layer decides how an object behaves given its state
 
 	Extract text, presentation in to resources
+

@@ -1,3 +1,5 @@
+var REALTIME = true;
+
 var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
@@ -62,27 +64,57 @@ var Game = (function () {
 		setTimeout(function () { engine.unlock(); if (cb) cb(); }, time);
 	};
 
+	/* Usage: waitForKey(handler[, timeout, timeoutCb])
+	 *   handler - a function that gets keypress events and does something with 
+	 *     them. It returns whether the keypress was one it cared about (ie 
+	 *     should waitForKey stop now).
+	 *   timeout - maximum time in milliseconds to wait for input. If no input 
+	 *     that handler cares about has been received in that time, timeoutCb
+	 *     is called with no arguments, and waitForKey stops. 
+	 *  waitForKey can be called from inside the handler, but must be immediately 
+	 *  followed by return true; ie you can't decide whether to accept a keypress
+	 *  based on another keypress.
+	 */
+
+	/* Here be re-entrant continuationy dragons */
 	var waitForKey = (function () {
 		var levels = 0;
 		var callback = null;
+		var timeoutCallback = null;
+		var timeoutHandles = [null];
 
-		var listener = function (e) {
-			if (callback(e)) {
-				levels--;
-				if (levels == 0) {
-					window.removeEventListener('keydown', listener);
-					engine.unlock();
-				}
+		var pop = function() {
+			if (timeoutHandles[1])
+				clearTimeout(timeoutHandles[1]);
+			timeoutHandles.splice(0,1);
+			levels--;
+			if (levels == 0) {
+				window.removeEventListener('keydown', listener);
+				engine.unlock();
 			}
 		};
 
-		return function(cb) {
+		var listener = function (e) {
+			if (callback(e)) {
+				pop();
+			}
+		};
+
+		var doTimeout = function() {
+			if (timeoutCallback)
+				timeoutCallback();
+			pop();
+		}
+
+		return function(cb, timeout, timeoutCb) {
 			if (levels == 0) {
 				window.addEventListener('keydown', listener);
 				engine.lock();
 			}
+			timeoutHandles.push(timeout ? setTimeout(doTimeout, timeout) : null);
 			levels++;
 			callback = cb;
+			timeoutCallback = timeoutCb;
 		};
 	})();
 
@@ -211,25 +243,26 @@ var Game = (function () {
 
 			base.act = function() {
 				Game.drawWholeMap();
+
 				var sliding = map[base.y()][base.x()].slide;
-				if (sliding) {
-					base.move(base.last_dir());
-					sleep(300);
-				} else {
-					waitForKey(function (e) {
-						var key = e.keyCode;
-						if (key == ROT.VK_PERIOD)
-							return true;
-						if (key === ROT.VK_Z) {
-							waitForKey(function (e) {
-								return base.zap(e.keyCode);
-							});
-							return true;
-						}
-						if (key in move_key)
-							return base.move(move_key[key]);
-					});
-				}
+
+				var timeout = !(sliding || REALTIME) ? null : 300;
+				var timeoutCb = !sliding ? null 
+						: function () { base.move(base.last_dir()); };
+
+				waitForKey(function (e) {
+					var key = e.keyCode;
+					if (key == ROT.VK_PERIOD)
+						return true;
+					if (key === ROT.VK_Z) {
+						waitForKey(function (e) {
+							return base.zap(e.keyCode);
+						});
+						return true;
+					}
+					if (key in move_key && !sliding)
+						return base.move(move_key[key]);
+				}, timeout, timeoutCb);
 			};
 
 			base.onExitMap = function() {
