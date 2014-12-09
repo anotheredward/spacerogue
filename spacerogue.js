@@ -434,7 +434,7 @@ var Game = (function () {
 		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
 			return false;
 
-	 	return map[y][x].ch != '#';
+		return map[y][x] != tiles['#'];
 	};
 
 	var drawWholeMap = function() {
