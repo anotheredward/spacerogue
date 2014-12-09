@@ -15,7 +15,7 @@ var map_data = [
 	",######################.##############,",
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                ,,,,,,,          ,,,,,,,",
 	"                                                       ,#####,          ,#####,",
-	"                                                       ,#...#,          ,#...#,",
+	"                                                       ,#...#,          ,#..p#,",
 	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,,,,,,,,,,,,#...#,",
 	"                                                       ,#...#.############...#,",
@@ -162,7 +162,7 @@ var Game = (function () {
 		if (!map[y][x].walkable)
 			return false;
 
-		if (getEntityAtPosition(x, y) != null)
+		if (getEntityAtPosition(x,y) != null && !getEntityAtPosition(x,y).isPart)
 			return false;
 
 		return true;
@@ -209,6 +209,11 @@ var Game = (function () {
 					if (this.onExitMap)
 						this.onExitMap();
 			}	
+			var potentialPart = getEntityAtPosition(new_x,new_y);
+			if (potentialPart != null && potentialPart.isPart)
+				if (this.onFindPart())
+					this.onFindPart();
+
 			if (tileWalkable(new_x, new_y)) {
 				last_dir = dir;
 				teleport(new_x, new_y);
@@ -265,6 +270,20 @@ var Game = (function () {
 				}, timeout, timeoutCb);
 			};
 
+			base.onFindPart = function() {
+				var entityIndex = -1;
+				for (var i = 0; i < entities.length; i++) {
+					if (entities[i].isPart)
+						entityIndex = i;
+				}
+				entities = entities
+					.slice(0,entityIndex)
+					.concat(entities.slice(entityIndex + 1, entities.length -1));
+				alert("Missing suit part found, you win!");
+				engine.lock();
+				location.reload();
+			}
+
 			base.onExitMap = function() {
 				alert("You are dead. And off the map. And stuff.");
 				engine.lock();
@@ -314,6 +333,16 @@ var Game = (function () {
 
 		return base;
 	});
+
+	var makePart = function (x, y) {
+		var base = makeEntity(x, y, 'p', 'yellow');
+
+		base.onLazered = function() {};
+		base.act = function() {};
+		base.isPart = true;
+
+		return base;
+	}
 
 	var makeEnemy = (function (x, y) {
 		var base = makeEntity(x, y, 'g', '#f00');
@@ -376,6 +405,10 @@ var Game = (function () {
 					var enemy = makeEnemy(x, y);
 					enemies.push(enemy);
 					entities.push(enemy);
+					tile = '.';
+				} else if (tile == 'p') {
+					var part = makePart(x, y);
+					entities.push(part);
 					tile = '.';
 				}
 
