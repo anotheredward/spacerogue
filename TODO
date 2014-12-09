@@ -1,48 +1,37 @@
 BUGS:
  o Lazers jump a square in their first move
- - Crashes surf sometimes
  - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
- - Enemies can steer in space (is this a bug? ;) )
- o Many characters can inhabit one tile
- - Enemies can trap you in space.
-   - Fix by letting you push off people in space (grappling)
  - Game crashes sometimes when laser leaves map (can reproduce by shooting up lots)
  - You can stay still in space by firing constantly. You should slide whether or not you lazered this turn. 
- - TypeError: map[(base.y(...) + base.last_dir.y)] is undefined spacerogue.js:373, after firing a lazer in to a walk multiple times from the bottom up
+
+WONTFIX
+ - Crashes surf sometimes
 
 Features:
-Prototype:
+Potential features
+ - Better AI (Scatter mode? Depends on gameplay decisions...)
+  - Splinter cell conviction type AI, attacks last seen position, player leaves a ghost, clear enemy LoS
+ - Pushing of stunned enemies?
+ - Status window for colour text
+ - Mouse controls
+ - Use a fancy scheduler so we can actually draw intermediate laser steps?
+
+v2
+
+v1
  o SPAAAAAACE!
  o Diagonal movement
  o Enemies
    o Some sort of common codebase, too. Like move()
-   - Better AI (Scatter mode? Depends on gameplay decisions...)
  o Shooting! Lasers! ZAP ZAP!
-   - Use a fancy scheduler so we can actually draw intermediate laser steps.
  o Change the sprite of stunned enemies to be a countdown
  o Lasers destroy walls
-   - Pushing of stunned enemies?
- - Field of View
    o Basic field of view
-   - Differentiate between not visble, unseen and space
- - Flavour-y explainy command line text thing
- - Sound
-    -Transition sound
- - Mouse controls, TBT hybrid-y thing
- - Splinter cell conviction type AI, attacks last seen position, player leaves a ghost, clear enemy LoS
- - Gold
-   - Players + Enemies have gold
-
-
-Code:
- o Make waitForKey re-entrant (allow calling waitForKey from within its callback) (maybe with reference counting)
- o Allow specifying a timeout for waitForKey, with an optional callback if nothing (valid) is pressed in that time. 
-
-If game is fun:
- - Lasers heat up walls, cool down over a couple of turns, break on second shot
- - Air pressure     m (_ _) m
- - Status window
- - Brainstorm!
+ o Sound
+    oTransition sound
+ o Suit Parts
+   o Collecting all suit parts wins game
+   o Suit parts are at spawned randomly
 
 Thoughts on entities in the game: 
 	The current core of an entity is which mode it is in
@@ -52,4 +41,3 @@ Thoughts on entities in the game:
 	The logic layer decides how an object behaves given its state
 
 	Extract text, presentation in to resources
-
