@@ -1,4 +1,4 @@
-var REALTIME = true;
+var REALTIME = false;
 
 var map_data = [
 
@@ -298,6 +298,7 @@ var Game = (function () {
 
 				waitForKey(function (e) {
 					var key = e.keyCode;
+					REALTIME = true;
 					if (key == ROT.VK_PERIOD)
 						return true;
 					if (key === ROT.VK_Z) {
