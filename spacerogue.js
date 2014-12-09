@@ -447,7 +447,7 @@ var Game = (function () {
 
 	var init = function() {
 		display = new ROT.Display();
-		document.body.appendChild(display.getContainer());
+		document.getElementById("display").appendChild(display.getContainer());
 
 		loadMap(map_data);
 		sparkle.act();
