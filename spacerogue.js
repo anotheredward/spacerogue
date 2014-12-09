@@ -162,7 +162,7 @@ var Game = (function () {
 		if (!map[y][x].walkable)
 			return false;
 
-		if (getEntityAtPosition(x,y) != null && !getEntityAtPosition(x,y).isPart)
+		if (getEntityAtPosition(x,y) != null && !getEntityAtPosition(x,y).walkable)
 			return false;
 
 		return true;
@@ -339,6 +339,7 @@ var Game = (function () {
 
 		base.onLazered = function() {};
 		base.act = function() {};
+		base.walkable = true;
 		base.isPart = true;
 
 		return base;
