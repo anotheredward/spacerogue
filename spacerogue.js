@@ -359,9 +359,9 @@ var Game = (function () {
 
 	var lazer = (function(x, y, dir) {
 		var sprite = dir.x == 0 ? '|' :
-								 dir.y == 0 ? '-' :
-		             dir.x.sign() == dir.y.sign() ? '\\' :
-								 '/';
+			dir.y == 0 ? '-' :
+			dir.x.sign() == dir.y.sign() ? '\\' :
+			'/';
 		var base = makeEntity(x, y, sprite, '#f00');
 		scheduler.add(base, true);
 		base.last_dir = dir;
