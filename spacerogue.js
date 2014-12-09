@@ -59,11 +59,6 @@ var Game = (function () {
 	var enemies = [];
 	var entities = [];
 
-	var sleep = function(time, cb) {
-		engine.lock();
-		setTimeout(function () { engine.unlock(); if (cb) cb(); }, time);
-	};
-
 	/* Usage: waitForKey(handler[, timeout, timeoutCb])
 	 *   handler - a function that gets keypress events and does something with 
 	 *     them. It returns whether the keypress was one it cared about (ie 
