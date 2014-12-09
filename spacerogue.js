@@ -211,7 +211,7 @@ var Game = (function () {
 			}	
 			var potentialPart = getEntityAtPosition(new_x,new_y);
 			if (potentialPart != null && potentialPart.isPart)
-				if (this.onFindPart())
+				if (this.onFindPart)
 					this.onFindPart();
 
 			if (tileWalkable(new_x, new_y)) {
