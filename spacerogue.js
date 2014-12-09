@@ -298,7 +298,10 @@ var Game = (function () {
 
 				waitForKey(function (e) {
 					var key = e.keyCode;
+
 					REALTIME = true;
+					document.getElementById('music').play();
+
 					if (key == ROT.VK_PERIOD)
 						return true;
 					if (key === ROT.VK_Z) {
