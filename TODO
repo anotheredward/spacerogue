@@ -8,6 +8,7 @@ BUGS:
    - Fix by letting you push off people in space (grappling)
  - Game crashes sometimes when laser leaves map (can reproduce by shooting up lots)
  - You can stay still in space by firing constantly. You should slide whether or not you lazered this turn. 
+ - TypeError: map[(base.y(...) + base.last_dir.y)] is undefined spacerogue.js:373, after firing a lazer in to a walk multiple times from the bottom up
 
 Features:
 Prototype:
