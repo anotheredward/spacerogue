@@ -1,7 +1,6 @@
 BUGS:
  o Lazers jump a square in their first move
  - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
- - Game crashes sometimes when laser leaves map (can reproduce by shooting up lots)
  - You can stay still in space by firing constantly. You should slide whether or not you lazered this turn. 
 
 WONTFIX

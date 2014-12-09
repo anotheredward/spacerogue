@@ -215,6 +215,13 @@ var Game = (function () {
 		return null;
 	}
 
+	var isPositionOutsideMap = function(x,y) {
+		return x < 0
+			|| x >= MAP_WIDTH
+			|| y < 0
+			|| y >= MAP_HEIGHT;
+	}
+
 	var makeEntity = (function (x, y, ch, col) {
 		var last_dir = { x: 1, y: 0 };
 		var color = col;
@@ -240,8 +247,7 @@ var Game = (function () {
 		var move = function (dir) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
-			if (new_x < 0 || new_x >= MAP_WIDTH ||
-				new_y < 0 || new_y >= MAP_HEIGHT) {
+			if (isPositionOutsideMap(new_x,new_y)) {
 					if (this.onExitMap)
 						this.onExitMap();
 			}	
@@ -367,14 +373,17 @@ var Game = (function () {
 
 		base.act = function() {
 			if(!base.move(base.last_dir)){
-				var lazeredEntity = getEntityAtPosition(base.x() + base.last_dir.x, base.y() + base.last_dir.y);
+				var new_x = base.x() + base.last_dir.x;
+				var new_y = base.y() + base.last_dir.y;
+				var lazeredEntity = getEntityAtPosition(new_x,new_y);
 				if (lazeredEntity) {
 					if (lazeredEntity.onLazered)
 						lazeredEntity.onLazered();
 				}
 				else {
 					//Wall collision, walls should probably be entities of some sort
-					map[base.y() + base.last_dir.y][base.x() + base.last_dir.x] = tiles['.'];
+					if (!isPositionOutsideMap(new_x,new_y))
+						map[new_y][new_x] = tiles['.'];
 				}
 				for (var i=0; i < entities.length; i++) {
 					if (entities[i].x == base.x && entities[i].y == base.y)
