@@ -273,10 +273,14 @@ var Game = (function () {
 			};
 
 			base.onMove = function(x,y) {
-				if (map[y][x] == tiles[','])
+				if (map[y][x] == tiles[',']) {
+					if (document.getElementById('music').volume > 0)
+						document.getElementById('pressure').play();
 					document.getElementById('music').volume = 0;
-				if (map[y][x] == tiles['.'])
+				}
+				if (map[y][x] == tiles['.']) {
 					document.getElementById('music').volume = 1;
+				}
 			};
 
 			base.onFindPart = function() {
