@@ -217,6 +217,8 @@ var Game = (function () {
 			if (tileWalkable(new_x, new_y)) {
 				last_dir = dir;
 				teleport(new_x, new_y);
+				if (this.onMove)
+					this.onMove(new_x, new_y);
 				return true;
 			}
 		};
@@ -268,6 +270,13 @@ var Game = (function () {
 					if (key in move_key && !sliding)
 						return base.move(move_key[key]);
 				}, timeout, timeoutCb);
+			};
+
+			base.onMove = function(x,y) {
+				if (map[y][x] == tiles[','])
+					document.getElementById('music').volume = 0;
+				if (map[y][x] == tiles['.'])
+					document.getElementById('music').volume = 1;
 			};
 
 			base.onFindPart = function() {
