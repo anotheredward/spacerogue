@@ -325,7 +325,7 @@ var Game = (function () {
 			base.onFindPart = function(part) {
 				entities.splice(entities.indexOf(part), 1);
 				if (++partsFound >= parts.count) {
-					alert("Missing suit part found, you win!");
+					alert("All missing suit parts found, you win!");
 					engine.lock();
 					location.reload();
 				} else {
@@ -334,7 +334,7 @@ var Game = (function () {
 			}
 
 			base.onExitMap = function() {
-				alert("You are dead. And off the map. And stuff.");
+				alert("You spin out in to space, accelerating endlessly. Game Over.");
 				engine.lock();
 				location.reload();
 			}
