@@ -349,6 +349,9 @@ var Game = (function () {
 					dir = move_key[key];
 					laz = new lazer(base.x(), base.y(), dir);
 					entities.push(laz);
+
+					if (map[base.y()][base.x()].slide)
+						base.move(base.last_dir());
 					return true;
 				} 
 				return false;
