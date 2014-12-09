@@ -15,7 +15,7 @@ var map_data = [
 	",######################.##############,",
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                ,,,,,,,          ,,,,,,,",
 	"                                                       ,#####,          ,#####,",
-	"                                                       ,#...#,          ,#..p#,",
+	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,          ,#...#,",
 	"                                                       ,#...#,,,,,,,,,,,,#...#,",
 	"                                                       ,#...#.############...#,",
@@ -155,6 +155,42 @@ var Game = (function () {
 		};
 	})(20);
 
+	var parts = (function () { 
+		var partCount = 4;
+		var makePart = function (x, y) {
+			var base = makeEntity(x, y, 'p', 'yellow');
+
+			base.onLazered = function() {};
+			base.act = function() {};
+			base.walkable = true;
+			base.isPart = true;
+
+			return base;
+		};
+
+		var addPart = function() {
+			while (true) {
+				var x = Math.floor(ROT.RNG.getUniform() * MAP_WIDTH);
+				var y = Math.floor(ROT.RNG.getUniform() * MAP_HEIGHT);
+				if (map[y][x].name == '.' && !getEntityAtPosition(x, y)) {
+					entities.push(makePart(x, y));
+					break;
+				}
+			}
+		};
+
+		var init = function() {
+			for (var i = 0; i < partCount; i++) {
+				addPart();
+			}
+		};
+
+		return {
+			count: partCount,
+			init: init
+		};
+	})();
+
 	var tileWalkable = function(x, y, who) {
 		if (!map[y] || !map[y][x])
 			return false;
@@ -209,12 +245,13 @@ var Game = (function () {
 					if (this.onExitMap)
 						this.onExitMap();
 			}	
-			var potentialPart = getEntityAtPosition(new_x,new_y);
-			if (potentialPart != null && potentialPart.isPart)
-				if (this.onFindPart)
-					this.onFindPart();
 
 			if (tileWalkable(new_x, new_y)) {
+				var potentialPart = getEntityAtPosition(new_x,new_y);
+				if (potentialPart != null && potentialPart.isPart)
+					if (this.onFindPart)
+						this.onFindPart(potentialPart);
+
 				last_dir = dir;
 				teleport(new_x, new_y);
 				if (this.onMove)
@@ -237,6 +274,8 @@ var Game = (function () {
 
 	var player = (function (x, y) {
 			var base = makeEntity(x, y);
+			
+			var partsFound = 0;
 
 			var move_key = {};
 			move_key[ROT.VK_UP] = { x: 0, y: -1 };
@@ -283,16 +322,15 @@ var Game = (function () {
 				}
 			};
 
-			base.onFindPart = function() {
-				var entityIndex = -1;
-				for (var i = 0; i < entities.length; i++) {
-					if (entities[i].isPart)
-						entityIndex = i;
+			base.onFindPart = function(part) {
+				entities.splice(entities.indexOf(part), 1);
+				if (++partsFound >= parts.count) {
+					alert("Missing suit part found, you win!");
+					engine.lock();
+					location.reload();
+				} else {
+					alert("Found missing suit part " + partsFound + " out of " + parts.count + "!");
 				}
-				entities = entities.splice(0,i);
-				alert("Missing suit part found, you win!");
-				engine.lock();
-				location.reload();
 			}
 
 			base.onExitMap = function() {
@@ -344,17 +382,6 @@ var Game = (function () {
 
 		return base;
 	});
-
-	var makePart = function (x, y) {
-		var base = makeEntity(x, y, 'p', 'yellow');
-
-		base.onLazered = function() {};
-		base.act = function() {};
-		base.walkable = true;
-		base.isPart = true;
-
-		return base;
-	}
 
 	var makeEnemy = (function (x, y) {
 		var base = makeEntity(x, y, 'g', '#f00');
@@ -418,10 +445,6 @@ var Game = (function () {
 					enemies.push(enemy);
 					entities.push(enemy);
 					tile = '.';
-				} else if (tile == 'p') {
-					var part = makePart(x, y);
-					entities.push(part);
-					tile = '.';
 				}
 
 				map[y].push(tiles[tile]);
@@ -463,6 +486,7 @@ var Game = (function () {
 
 		loadMap(map_data);
 		sparkle.act();
+		parts.init();
 		drawWholeMap();
 		scheduler.add(player, true);
 		scheduler.add(sparkle, true);
