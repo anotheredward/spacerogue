@@ -276,9 +276,7 @@ var Game = (function () {
 					if (entities[i].isPart)
 						entityIndex = i;
 				}
-				entities = entities
-					.slice(0,entityIndex)
-					.concat(entities.slice(entityIndex + 1, entities.length -1));
+				entities = entities.splice(0,i);
 				alert("Missing suit part found, you win!");
 				engine.lock();
 				location.reload();
