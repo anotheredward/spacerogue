@@ -4,14 +4,14 @@ var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                            ,,,,,,,,,,,,,,,",
 	",###################################,                            ,#############,",
-	",#.......#.........#...............#,                            ,#...........#,",
+	",#.......#.........#............p..#,                            ,#p..........#,",
 	",#.......#.........#.##.##########..,                            ,............#,",
 	",#....####....#.......#.#........###,       ,,,                  ,#...........#,",
 	",#....#.......#.......#.#..........#,       ,#,                  ,#...........#,",
 	",#....#.......#.......#.#..........#,       ,,,                  ,##########.##,",
 	",#....#.......#.......#.#..........#,                    ,,,,    ,,,,,,,,,,,,,,,",
 	",#....#.......#.......#.#..........#,                   ,,##,                   ",
-	",#....#.......#.......#.#..........#,                   ,###,                   ",
+	",#....#.......#.@.....#.#..........#,                   ,###,                   ",
 	",#....###..############.########..##,                   ,,,,,                   ",
 	",#....#............................#,                                   ,,,,,,,,",
 	",#....#.............................,                                   ,###.##,",
@@ -20,13 +20,13 @@ var map_data = [
 	",#..................................                   ,,,   ,,,,,,     ,#....#,",
 	",#..................................,                  ,#.....####,     ,#....#,",
 	",#.................................#,                  ,#.........,     ,.....#,",
-	",#......................############,          ,,,     ,#........#,     ,######,",
-	",#......................#..........#,       ,, ,#,     ,#........#,     ,,,,,,,,",
-	",#......................#..........#,       ,# ##,     ,#........#,             ",
+	",#.......g..............############,          ,,,     ,#........#,     ,######,",
+	",#......................#g.........#,       ,, ,#,     ,#........#,     ,,,,,,,,",
+	",#......................#..........#,       ,#d##,     ,#........#,             ",
 	",#.................................#,       ,, ,,,     ,#........#,             ",
 	",#..................................,                  ,.........#,   ,,,,,,,,,,",
-	",###################################,        ,,,       ,##########,   ,######@##",
-	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,        ,#,       ,,,,,,,,,,,,   ,#........",
+	",###################################,        ,,,       ,##########,   ,######.##",
+	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,        ,#,       ,,,,,,,,,,,,   ,#p.......",
 ];
 
 var Util = {
@@ -57,6 +57,7 @@ var Game = (function () {
 	};
 
 	var enemies = [];
+	var partsCount = 0;
 	var entities = [];
 
 	/* Usage: waitForKey(handler[, timeout, timeoutCb])
@@ -150,50 +151,14 @@ var Game = (function () {
 		};
 	})(20);
 
-	var parts = (function () { 
-		var partCount = 4;
-		var makePart = function (x, y) {
-			var base = makeEntity(x, y, 'p', 'yellow');
-
-			base.onLazered = function() {};
-			base.act = function() {};
-			base.walkable = true;
-			base.isPart = true;
-
-			return base;
-		};
-
-		var addPart = function() {
-			while (true) {
-				var x = Math.floor(ROT.RNG.getUniform() * MAP_WIDTH);
-				var y = Math.floor(ROT.RNG.getUniform() * MAP_HEIGHT);
-				if (map[y][x].name == '.' && !getEntityAtPosition(x, y)) {
-					entities.push(makePart(x, y));
-					break;
-				}
-			}
-		};
-
-		var init = function() {
-			for (var i = 0; i < partCount; i++) {
-				addPart();
-			}
-		};
-
-		return {
-			count: partCount,
-			init: init
-		};
-	})();
-
-	var tileWalkable = function(x, y, who) {
+	var tileWalkable = function(x, y) {
 		if (!isPositionInsideMap(x,y))
 			return false;
 
 		if (!map[y][x].walkable)
 			return false;
 
-		if (getEntityAtPosition(x,y) != null && !getEntityAtPosition(x,y).walkable)
+		if (getEntityAtPosition(x, y) != null && !getEntityAtPosition(x,y).walkable)
 			return false;
 
 		return true;
@@ -331,12 +296,12 @@ var Game = (function () {
 
 			base.onFindPart = function(part) {
 				entities.splice(entities.indexOf(part), 1);
-				if (++partsFound >= parts.count) {
+				if (++partsFound >= partsCount) {
 					alert("All missing suit parts found, you win!");
 					engine.lock();
 					location.reload();
 				} else {
-					document.getElementById("partsLeft").innerHTML = parts.count - partsFound;
+					document.getElementById("partsLeft").innerHTML = partsCount - partsFound;
 				}
 			}
 
@@ -361,6 +326,17 @@ var Game = (function () {
 
 			return base;
 	})(1, 1);
+
+	var makePart = function (x, y) {
+		var base = makeEntity(x, y, 'p', 'yellow');
+
+		base.onLazered = function() {};
+		base.act = function() {};
+		base.walkable = true;
+		base.isPart = true;
+
+		return base;
+	};
 
 	var lazer = function(x, y, dir) {
 		var sprite = dir.x == 0 ? '|' :
@@ -458,6 +434,16 @@ var Game = (function () {
 					enemies.push(enemy);
 					entities.push(enemy);
 					tile = '.';
+				} else if (tile == 'p') {
+					var part = makePart(x, y);
+					entities.push(part);
+					partsCount++;
+					tile = '.';
+				} else if (tile == 'd') {
+					var part = makePart(x, y);
+					entities.push(part);
+					partsCount++;
+					tile = ' ';
 				}
 
 				map[y].push(tiles[tile]);
@@ -499,8 +485,7 @@ var Game = (function () {
 
 		loadMap(map_data);
 		sparkle.act();
-		parts.init();
-		document.getElementById("partsLeft").innerHTML = parts.count;
+		document.getElementById("partsLeft").innerHTML = partsCount;
 		drawWholeMap();
 		scheduler.add(player, true);
 		scheduler.add(sparkle, true);
