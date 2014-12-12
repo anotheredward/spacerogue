@@ -1,6 +1,22 @@
 Can get stuck in space on goblin collision
 	Loss condition, goblin death cuddle
 
+Remove all alerts
+	Death Alert
+		scrolling through space animation
+	Win Screen
+		ASCII ART THUMBS UP, RESET
+   _
+ ( ((
+  \ =\
+ __\_ `-\ 
+(____))(  \-----
+(____)) _  YOU DIDN'T DIE.  
+(____))    CONGRATS.
+(____))____/----
+
+http://www.afn.org/~afn39695/chatsurf.htm
+
 Step counter? 
 
 WONTFOX
