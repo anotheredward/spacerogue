@@ -1,18 +1,12 @@
-ALERTS SUCK FOR FREQUENT EVENTS!
+Can get stuck in space on goblin collision
+	Loss condition, goblin death cuddle
 
-Goblins overwhelm players
-	introduce goblins later	
+Step counter? 
 
-People endlessly lazer goblins
-	WONTFIX
-
+WONTFOX
 People have trouble differentiating space from Lukas
 	Fog of war
 
-Can get stuck in space on goblin collision
-
-Too hard
-People don't play more than once
 
 DONE
 No one works out they can lazer
@@ -48,4 +42,11 @@ Hard to tell when you're in space walk mode
 Random part locations are breaking the level design
 	Remove random part systems
 	Replace with manually placing parts
+
+Goblins overwhelm players
+	introduce goblins later	
+
+ALERTS SUCK FOR FREQUENT EVENTS!
+	Made falling out the map uncommon
+	Replaced part alerts with legend updates
 
