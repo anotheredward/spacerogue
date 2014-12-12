@@ -1,8 +1,7 @@
 /*
 	This is rot.js, the ROguelike Toolkit in JavaScript.
-	Version 0.5~dev, generated on Thu Apr  4 12:25:16 CEST 2013.
+	Version 0.6~dev, generated on Tue Oct 14 15:41:20 CEST 2014.
 */
-
 /**
  * @namespace Top-level ROT namespace
  */
@@ -678,6 +677,21 @@ Function.prototype.extend = function(parent) {
 	this.prototype.constructor = this;
 	return this;
 }
+window.requestAnimationFrame =
+	window.requestAnimationFrame
+	|| window.mozRequestAnimationFrame
+	|| window.webkitRequestAnimationFrame
+	|| window.oRequestAnimationFrame
+	|| window.msRequestAnimationFrame
+	|| function(cb) { return setTimeout(cb, 1000/60); };
+
+window.cancelAnimationFrame =
+	window.cancelAnimationFrame
+	|| window.mozCancelAnimationFrame
+	|| window.webkitCancelAnimationFrame
+	|| window.oCancelAnimationFrame
+	|| window.msCancelAnimationFrame
+	|| function(id) { return clearTimeout(id); };
 /**
  * @class Visual map display
  * @param {object} [options]
@@ -688,10 +702,13 @@ Function.prototype.extend = function(parent) {
  * @param {string} [options.fontStyle=""] bold/italic/none/both
  * @param {string} [options.fg="#ccc"]
  * @param {string} [options.bg="#000"]
- * @param {int} [options.fps=25]
  * @param {float} [options.spacing=1]
  * @param {float} [options.border=0]
  * @param {string} [options.layout="rect"]
+ * @param {int} [options.tileWidth=32]
+ * @param {int} [options.tileHeight=32]
+ * @param {object} [options.tileMap={}]
+ * @param {image} [options.tileSet=null]
  */
 ROT.Display = function(options) {
 	var canvas = document.createElement("canvas");
@@ -704,21 +721,26 @@ ROT.Display = function(options) {
 	var defaultOptions = {
 		width: ROT.DEFAULT_WIDTH,
 		height: ROT.DEFAULT_HEIGHT,
+		transpose: false,
 		layout: "rect",
 		fontSize: 15,
-		fps: 25,
 		spacing: 1,
 		border: 0,
 		fontFamily: "monospace",
 		fontStyle: "",
 		fg: "#ccc",
-		bg: "#000"
+		bg: "#000",
+		tileWidth: 32,
+		tileHeight: 32,
+		tileMap: {},
+		tileSet: null
 	};
 	for (var p in options) { defaultOptions[p] = options[p]; }
 	this.setOptions(defaultOptions);
 	this.DEBUG = this.DEBUG.bind(this);
-	
-	this._interval = setInterval(this._tick.bind(this), 1000/this._options.fps);
+
+	this._tick = this._tick.bind(this);
+	requestAnimationFrame(this._tick);
 }
 
 /**
@@ -810,15 +832,10 @@ ROT.Display.prototype.eventToPosition = function(e) {
 		var x = e.clientX;
 		var y = e.clientY;
 	}
-	x += (document.documentElement.scrollLeft);
-	y += (document.documentElement.scrollTop);
-	
-	var node = this._context.canvas;
-	while (node) {
-		x -= node.offsetLeft;
-		y -= node.offsetTop;
-		node = node.offsetParent;
-	}
+
+	var rect = this._context.canvas.getBoundingClientRect();
+	x -= rect.left;
+	y -= rect.top;
 	
 	if (x < 0 || y < 0 || x >= this._context.canvas.width || y >= this._context.canvas.height) { return [-1, -1]; }
 
@@ -828,7 +845,7 @@ ROT.Display.prototype.eventToPosition = function(e) {
 /**
  * @param {int} x
  * @param {int} y
- * @param {string} ch 
+ * @param {string || string[]} ch One or more chars (will be overlapping themselves)
  * @param {string} [fg] foreground color
  * @param {string} [bg] background color
  */
@@ -864,8 +881,23 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
 		var token = tokens.shift();
 		switch (token.type) {
 			case ROT.Text.TYPE_TEXT:
+				var isSpace = isPrevSpace = isFullWidth = isPrevFullWidth = false;
 				for (var i=0;i<token.value.length;i++) {
-					this.draw(cx++, cy, token.value.charAt(i), fg, bg);
+					var cc = token.value.charCodeAt(i);
+					var c = token.value.charAt(i);
+					// Assign to `true` when the current char is full-width.
+					isFullWidth = (cc > 0xff && cc < 0xff61) || (cc > 0xffdc && cc < 0xffe8) && cc > 0xffee;
+					// Current char is space, whatever full-width or half-width both are OK.
+					isSpace = (c.charCodeAt(0) == 0x20 || c.charCodeAt(0) == 0x3000);
+					// The previous char is full-width and
+					// current char is nether half-width nor a space.
+					if (isPrevFullWidth && !isFullWidth && !isSpace) { cx++; } // add an extra position
+					// The current char is full-width and
+					// the previous char is not a space.
+					if(isFullWidth && !isPrevSpace) { cx++; } // add an extra position
+					this.draw(cx++, cy, c, fg, bg);
+					isPrevSpace = isSpace;
+					isPrevFullWidth = isFullWidth;
 				}
 			break;
 
@@ -892,6 +924,8 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
  * Timer tick: update dirty parts
  */
 ROT.Display.prototype._tick = function() {
+	requestAnimationFrame(this._tick);
+
 	if (!this._dirty) { return; }
 
 	if (this._dirty === true) { /* draw all */
@@ -1002,7 +1036,11 @@ ROT.Display.Rect.prototype._drawWithCache = function(data, clearBefore) {
 			ctx.font = this._context.font;
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
-			ctx.fillText(ch, this._spacingX/2, this._spacingY/2);
+
+			var chars = [].concat(ch);
+			for (var i=0;i<chars.length;i++) {
+				ctx.fillText(chars[i], this._spacingX/2, this._spacingY/2);
+			}
 		}
 		this._canvasCache[hash] = canvas;
 	}
@@ -1026,7 +1064,11 @@ ROT.Display.Rect.prototype._drawNoCache = function(data, clearBefore) {
 	if (!ch) { return; }
 
 	this._context.fillStyle = fg;
-	this._context.fillText(ch, (x+0.5) * this._spacingX, (y+0.5) * this._spacingY);
+
+	var chars = [].concat(ch);
+	for (var i=0;i<chars.length;i++) {
+		this._context.fillText(chars[i], (x+0.5) * this._spacingX, (y+0.5) * this._spacingY);
+	}
 }
 
 ROT.Display.Rect.prototype.computeSize = function(availWidth, availHeight) {
@@ -1073,12 +1115,21 @@ ROT.Display.Hex.extend(ROT.Display.Backend);
 ROT.Display.Hex.prototype.compute = function(options) {
 	this._options = options;
 
+	/* FIXME char size computation does not respect transposed hexes */
 	var charWidth = Math.ceil(this._context.measureText("W").width);
 	this._hexSize = Math.floor(options.spacing * (options.fontSize + charWidth/Math.sqrt(3)) / 2);
 	this._spacingX = this._hexSize * Math.sqrt(3) / 2;
 	this._spacingY = this._hexSize * 1.5;
-	this._context.canvas.width = Math.ceil( (options.width + 1) * this._spacingX );
-	this._context.canvas.height = Math.ceil( (options.height - 1) * this._spacingY + 2*this._hexSize );
+
+	if (options.transpose) {
+		var xprop = "height";
+		var yprop = "width";
+	} else {
+		var xprop = "width";
+		var yprop = "height";
+	}
+	this._context.canvas[xprop] = Math.ceil( (options.width + 1) * this._spacingX );
+	this._context.canvas[yprop] = Math.ceil( (options.height - 1) * this._spacingY + 2*this._hexSize );
 }
 
 ROT.Display.Hex.prototype.draw = function(data, clearBefore) {
@@ -1088,28 +1139,46 @@ ROT.Display.Hex.prototype.draw = function(data, clearBefore) {
 	var fg = data[3];
 	var bg = data[4];
 
-	var cx = (x+1) * this._spacingX;
-	var cy = y * this._spacingY + this._hexSize;
+	var px = [
+		(x+1) * this._spacingX,
+		y * this._spacingY + this._hexSize
+	];
+	if (this._options.transpose) { px.reverse(); }
 
 	if (clearBefore) { 
 		this._context.fillStyle = bg;
-		this._fill(cx, cy);
+		this._fill(px[0], px[1]);
 	}
 	
 	if (!ch) { return; }
 
 	this._context.fillStyle = fg;
-	this._context.fillText(ch, cx, cy);
+
+	var chars = [].concat(ch);
+	for (var i=0;i<chars.length;i++) {
+		this._context.fillText(chars[i], px[0], px[1]);
+	}
 }
 
-
 ROT.Display.Hex.prototype.computeSize = function(availWidth, availHeight) {
+	if (this._options.transpose) {
+		availWidth += availHeight;
+		availHeight = availWidth - availHeight;
+		availWidth -= availHeight;
+	}
+
 	var width = Math.floor(availWidth / this._spacingX) - 1;
 	var height = Math.floor((availHeight - 2*this._hexSize) / this._spacingY + 1);
 	return [width, height];
 }
 
 ROT.Display.Hex.prototype.computeFontSize = function(availWidth, availHeight) {
+	if (this._options.transpose) {
+		availWidth += availHeight;
+		availHeight = availWidth - availHeight;
+		availWidth -= availHeight;
+	}
+
 	var hexSizeWidth = 2*availWidth / ((this._options.width+1) * Math.sqrt(3)) - 1;
 	var hexSizeHeight = availHeight / (2 + 1.5*(this._options.height-1));
 	var hexSize = Math.min(hexSizeWidth, hexSizeHeight);
@@ -1123,6 +1192,7 @@ ROT.Display.Hex.prototype.computeFontSize = function(availWidth, availHeight) {
 
 	hexSize = Math.floor(hexSize)+1; /* closest larger hexSize */
 
+	/* FIXME char size computation does not respect transposed hexes */
 	var fontSize = 2*hexSize / (this._options.spacing * (1 + ratio / Math.sqrt(3)));
 
 	/* closest smaller fontSize */
@@ -1130,9 +1200,17 @@ ROT.Display.Hex.prototype.computeFontSize = function(availWidth, availHeight) {
 }
 
 ROT.Display.Hex.prototype.eventToPosition = function(x, y) {
-	var height = this._context.canvas.height / this._options.height;
-	y = Math.floor(y/height);
-	
+	if (this._options.transpose) {
+		x += y;
+		y = x-y;
+		x -= y;
+		var prop = "width";
+	} else {
+		var prop = "height";
+	}
+	var size = this._context.canvas[prop] / this._options[prop];
+	y = Math.floor(y/size);
+
 	if (y.mod(2)) { /* odd row */
 		x -= this._spacingX;
 		x = 1 + 2*Math.floor(x/(2*this._spacingX));
@@ -1143,19 +1221,96 @@ ROT.Display.Hex.prototype.eventToPosition = function(x, y) {
 	return [x, y];
 }
 
+/**
+ * Arguments are pixel values. If "transposed" mode is enabled, then these two are already swapped.
+ */
 ROT.Display.Hex.prototype._fill = function(cx, cy) {
 	var a = this._hexSize;
 	var b = this._options.border;
 	
 	this._context.beginPath();
-	this._context.moveTo(cx, cy-a+b);
-	this._context.lineTo(cx + this._spacingX - b, cy-a/2+b);
-	this._context.lineTo(cx + this._spacingX - b, cy+a/2-b);
-	this._context.lineTo(cx, cy+a-b);
-	this._context.lineTo(cx - this._spacingX + b, cy+a/2-b);
-	this._context.lineTo(cx - this._spacingX + b, cy-a/2+b);
-	this._context.lineTo(cx, cy-a+b);
+
+	if (this._options.transpose) {
+		this._context.moveTo(cx-a+b,	cy);
+		this._context.lineTo(cx-a/2+b,	cy+this._spacingX-b);
+		this._context.lineTo(cx+a/2-b,	cy+this._spacingX-b);
+		this._context.lineTo(cx+a-b,	cy);
+		this._context.lineTo(cx+a/2-b,	cy-this._spacingX+b);
+		this._context.lineTo(cx-a/2+b,	cy-this._spacingX+b);
+		this._context.lineTo(cx-a+b,	cy);
+	} else {
+		this._context.moveTo(cx,					cy-a+b);
+		this._context.lineTo(cx+this._spacingX-b,	cy-a/2+b);
+		this._context.lineTo(cx+this._spacingX-b,	cy+a/2-b);
+		this._context.lineTo(cx,					cy+a-b);
+		this._context.lineTo(cx-this._spacingX+b,	cy+a/2-b);
+		this._context.lineTo(cx-this._spacingX+b,	cy-a/2+b);
+		this._context.lineTo(cx,					cy-a+b);
+	}
 	this._context.fill();
+}
+/**
+ * @class Tile backend
+ * @private
+ */
+ROT.Display.Tile = function(context) {
+	ROT.Display.Rect.call(this, context);
+	
+	this._options = {};
+}
+ROT.Display.Tile.extend(ROT.Display.Rect);
+
+ROT.Display.Tile.prototype.compute = function(options) {
+	this._options = options;
+	this._context.canvas.width = options.width * options.tileWidth;
+	this._context.canvas.height = options.height * options.tileHeight;
+}
+
+ROT.Display.Tile.prototype.draw = function(data, clearBefore) {
+	var x = data[0];
+	var y = data[1];
+	var ch = data[2];
+	var fg = data[3];
+	var bg = data[4];
+
+	var tileWidth = this._options.tileWidth;
+	var tileHeight = this._options.tileHeight;
+
+	if (clearBefore) {
+		var b = this._options.border;
+		this._context.fillStyle = bg;
+		this._context.fillRect(x*tileWidth, y*tileHeight, tileWidth, tileHeight);
+	}
+
+	if (!ch) { return; }
+
+	var chars = [].concat(ch);
+	for (var i=0;i<chars.length;i++) {
+		var tile = this._options.tileMap[chars[i]];
+		if (!tile) { throw new Error("Char '" + chars[i] + "' not found in tileMap"); }
+		
+		this._context.drawImage(
+			this._options.tileSet,
+			tile[0], tile[1], tileWidth, tileHeight,
+			x*tileWidth, y*tileHeight, tileWidth, tileHeight
+		);
+	}
+}
+
+ROT.Display.Tile.prototype.computeSize = function(availWidth, availHeight) {
+	var width = Math.floor(availWidth / this._options.tileWidth);
+	var height = Math.floor(availHeight / this._options.tileHeight);
+	return [width, height];
+}
+
+ROT.Display.Tile.prototype.computeFontSize = function(availWidth, availHeight) {
+	var width = Math.floor(availWidth / this._options.width);
+	var height = Math.floor(availHeight / this._options.height);
+	return [width, height];
+}
+
+ROT.Display.Tile.prototype.eventToPosition = function(x, y) {
+	return [Math.floor(x/this._options.tileWidth), Math.floor(y/this._options.tileHeight)];
 }
 /**
  * @namespace
@@ -1199,6 +1354,17 @@ ROT.RNG = {
 		this._c = t | 0;
 		this._s2 = t - this._c;
 		return this._s2;
+	},
+
+	/**
+	 * @param {int} lowerBound The lower end of the range to return a value from, inclusive
+	 * @param {int} upperBound The upper end of the range to return a value from, inclusive
+	 * @returns {int} Pseudorandom value [lowerBound, upperBound], using ROT.RNG.getUniform() to distribute the value
+	 */
+	getUniformInt: function(lowerBound, upperBound) {
+		var max = Math.max(lowerBound, upperBound);
+		var min = Math.min(lowerBound, upperBound);
+		return Math.floor(this.getUniform() * (max - min + 1)) + min;
 	},
 
 	/**
@@ -1264,6 +1430,15 @@ ROT.RNG = {
 		this._s2 = state[2];
 		this._c  = state[3];
 		return this;
+	},
+
+	/**
+	 * Returns a cloned RNG
+	 */
+	clone: function() {
+		var clone = Object.create(this);
+		clone.setState(this.getState());
+		return clone;
 	},
 
 	_s0: 0,
@@ -1708,6 +1883,7 @@ ROT.Engine.prototype.start = function() {
  */
 ROT.Engine.prototype.lock = function() {
 	this._lock++;
+	return this;
 }
 
 /**
@@ -1720,7 +1896,11 @@ ROT.Engine.prototype.unlock = function() {
 	while (!this._lock) {
 		var actor = this._scheduler.next();
 		if (!actor) { return this.lock(); } /* no actors */
-		actor.act();
+		var result = actor.act();
+		if (result && result.then) { /* actor returned a "thenable", looks like a Promise */
+			this.lock();
+			result.then(this.unlock.bind(this));
+		}
 	}
 
 	return this;
@@ -2084,9 +2264,10 @@ ROT.Map.Cellular = function(width, height, options) {
 	this._options = {
 		born: [5, 6, 7, 8],
 		survive: [4, 5, 6, 7, 8],
-		topology: 8
+		topology: 8,
+		connected: false
 	};
-	for (var p in options) { this._options[p] = options[p]; }
+	this.setOptions(options);
 	
 	this._dirs = ROT.DIRS[this._options.topology];
 	this._map = this._fillMap(0);
@@ -2104,6 +2285,14 @@ ROT.Map.Cellular.prototype.randomize = function(probability) {
 		}
 	}
 	return this;
+}
+
+/**
+ * Change options.
+ * @see ROT.Map.Cellular
+ */
+ROT.Map.Cellular.prototype.setOptions = function(options) {
+	for (var p in options) { this._options[p] = options[p]; }
 }
 
 ROT.Map.Cellular.prototype.set = function(x, y, value) {
@@ -2133,13 +2322,24 @@ ROT.Map.Cellular.prototype.create = function(callback) {
 				newMap[i][j] = 1;
 			} else if (!cur && born.indexOf(ncount) != -1) { /* born */
 				newMap[i][j] = 1;
-			}
-			
-			if (callback) { callback(i, j, newMap[i][j]); }
+			}			
 		}
 	}
 	
 	this._map = newMap;
+
+	// optinially connect every space
+	if (this._options.connected) {
+		this._completeMaze();	
+	}
+
+	if (callback) { 
+		for (var i = 0; i < this._width; i++) {
+			for (var j = 0; j < this._height; j++) {
+				callback(i, j, newMap[i][j]);
+			}
+		}
+	}
 }
 
 /**
@@ -2158,6 +2358,166 @@ ROT.Map.Cellular.prototype._getNeighbors = function(cx, cy) {
 	
 	return result;
 }
+
+/**
+ * Make sure every non-wall space is accessible.
+ */
+ROT.Map.Cellular.prototype._completeMaze = function() {
+	var allFreeSpace = [];
+	var notConnected = {};
+	// find all free space
+	for (var x = 0; x < this._width; x++) {
+		for (var y = 0; y < this._height; y++) {
+			if (this._freeSpace(x, y)) {
+				var p = [x, y];
+				notConnected[this._pointKey(p)] = p;
+				allFreeSpace.push([x, y]);
+			}
+		}
+	}
+	var start = allFreeSpace[ROT.RNG.getUniformInt(0, allFreeSpace.length - 1)];
+
+	var key = this._pointKey(start);
+	var connected = {};
+	connected[key] = start;
+	delete notConnected[key]
+
+	// find what's connected to the starting point
+	this._findConnected(connected, notConnected, [start]);
+
+	while(Object.keys(notConnected).length > 0) {
+
+		// find two points from notConnected to connected
+		var p = this._getFromTo(connected, notConnected);
+		var from = p[0]; // notConnected
+		var to = p[1]; // connected
+
+		// find everything connected to the starting point
+		var local = {};
+		local[this._pointKey(from)] = from;
+		this._findConnected(local, notConnected, [from], true);
+
+		// connect to a connected square
+		this._tunnelToConnected(to, from, connected, notConnected);
+
+		// now all of local is connected
+		for (var k in local) {
+			var pp = local[k];
+			this._map[pp[0]][pp[1]] = 0;
+			connected[k] = pp;
+			delete notConnected[k];
+		}
+	}
+}
+
+/**
+ * Find random points to connect. Search for the closest point in the larger space. 
+ * This is to minimize the length of the passage while maintaining good performance.
+ */
+ROT.Map.Cellular.prototype._getFromTo = function(connected, notConnected) {
+	var from, to, d;
+	var connectedKeys = Object.keys(connected);
+	var notConnectedKeys = Object.keys(notConnected);
+	for (var i = 0; i < 5; i++) {
+		if (connectedKeys.length < notConnectedKeys.length) {
+			var keys = connectedKeys;
+			to = connected[keys[ROT.RNG.getUniformInt(0, keys.length - 1)]]
+			from = this._getClosest(to, notConnected);
+		} else {
+			var keys = notConnectedKeys;
+			from = notConnected[keys[ROT.RNG.getUniformInt(0, keys.length - 1)]]
+			to = this._getClosest(from, connected);
+		}
+		d = (from[0] - to[0]) * (from[0] - to[0]) + (from[1] - to[1]) * (from[1] - to[1]);
+		if (d < 64) {
+			break;
+		}
+	}
+	// console.log(">>> connected=" + to + " notConnected=" + from + " dist=" + d);
+	return [from, to];
+}
+
+ROT.Map.Cellular.prototype._getClosest = function(point, space) {
+	var minPoint = null;
+	var minDist = null;
+	for (k in space) {
+		var p = space[k];
+		var d = (p[0] - point[0]) * (p[0] - point[0]) + (p[1] - point[1]) * (p[1] - point[1]);
+		if (minDist == null || d < minDist) {
+			minDist = d;
+			minPoint = p;
+		}
+	}
+	return minPoint;
+}
+
+ROT.Map.Cellular.prototype._findConnected = function(connected, notConnected, stack, keepNotConnected) {
+	while(stack.length > 0) {
+		var p = stack.splice(0, 1)[0];
+		var tests = [
+			[p[0] + 1, p[1]],
+			[p[0] - 1, p[1]],
+			[p[0],     p[1] + 1],
+			[p[0],     p[1] - 1]
+		];
+		for (var i = 0; i < tests.length; i++) {
+			var key = this._pointKey(tests[i]);
+			if (connected[key] == null && this._freeSpace(tests[i][0], tests[i][1])) {
+				connected[key] = tests[i];
+				if (!keepNotConnected) {
+					delete notConnected[key];
+				}
+				stack.push(tests[i]);
+			}
+		}
+	}
+}
+
+ROT.Map.Cellular.prototype._tunnelToConnected = function(to, from, connected, notConnected) {
+	var key = this._pointKey(from);
+	var a, b;
+	if (from[0] < to[0]) {
+		a = from;
+		b = to;
+	} else {
+		a = to;
+		b = from;
+	}
+	for (var xx = a[0]; xx <= b[0]; xx++) {
+		this._map[xx][a[1]] = 0;
+		var p = [xx, a[1]];
+		var pkey = this._pointKey(p);
+		connected[pkey] = p;
+		delete notConnected[pkey];
+	}
+
+	// x is now fixed
+	var x = b[0];
+
+	if (from[1] < to[1]) {
+		a = from;
+		b = to;
+	} else {
+		a = to;
+		b = from;
+	}
+	for (var yy = a[1]; yy < b[1]; yy++) {
+		this._map[x][yy] = 0;
+		var p = [x, yy];
+		var pkey = this._pointKey(p);
+		connected[pkey] = p;
+		delete notConnected[pkey];
+	}
+}
+
+ROT.Map.Cellular.prototype._freeSpace = function(x, y) {
+	return x >= 0 && x < this._width && y >= 0 && y < this._height && this._map[x][y] != 1;
+}
+
+ROT.Map.Cellular.prototype._pointKey = function(p) {
+	return p[0] + "." + p[1];
+}
+
 /**
  * @class Dungeon map: has rooms and corridors
  * @augments ROT.Map
@@ -2253,7 +2613,7 @@ ROT.Map.Digger.prototype.create = function(callback) {
 		do {
 			featureAttempts++;
 			if (this._tryFeature(x, y, dir[0], dir[1])) { /* feature added */
-				if (this._rooms.length + this._corridors.length == 2) { this._rooms[0].addDoor(x, y); } /* first room oficially has doors */
+				//if (this._rooms.length + this._corridors.length == 2) { this._rooms[0].addDoor(x, y); } /* first room oficially has doors */
 				this._removeSurroundingWalls(x, y);
 				this._removeSurroundingWalls(x-dir[0], y-dir[1]);
 				break; 
@@ -2266,6 +2626,8 @@ ROT.Map.Digger.prototype.create = function(callback) {
 		}
 
 	} while (this._dug/area < this._options.dugPercentage || priorityWalls); /* fixme number of priority walls */
+
+	this._addDoors();
 
 	if (callback) {
 		for (var i=0;i<this._width;i++) {
@@ -2341,21 +2703,8 @@ ROT.Map.Digger.prototype._findWall = function() {
  * @returns {bool} was this a successful try?
  */
 ROT.Map.Digger.prototype._tryFeature = function(x, y, dx, dy) {
-	var feature = null;
-	var total = 0;
-	for (var p in this._features) { total += this._features[p]; }
-	var random = Math.floor(ROT.RNG.getUniform()*total);
-	
-	var sub = 0;
-	for (var p in this._features) {
-		sub += this._features[p];
-		if (random < sub) { 
-			feature = ROT.Map.Feature[p];
-			break; 
-		}
-	}
-	
-	feature = feature.createRandomAt(x, y, dx, dy, this._options);
+	var feature = ROT.RNG.getWeightedValue(this._features);
+	feature = ROT.Map.Feature[feature].createRandomAt(x, y, dx, dy, this._options);
 	
 	if (!feature.isValid(this._isWallCallback, this._canBeDugCallback)) {
 //		console.log("not valid");
@@ -2414,6 +2763,21 @@ ROT.Map.Digger.prototype._getDiggingDirection = function(cx, cy) {
 	
 	return [-result[0], -result[1]];
 }
+
+/**
+ * Find empty spaces surrounding rooms, and apply doors.
+ */
+ROT.Map.Digger.prototype._addDoors = function() {
+	var data = this._map;
+	var isWallCallback = function(x, y) {
+		return (data[x][y] == 1);
+	}
+	for (var i = 0; i < this._rooms.length; i++ ) {
+		var room = this._rooms[i];
+		room.clearDoors();
+		room.addDoors(isWallCallback);
+	}
+}
 /**
  * @class Dungeon generator which tries to fill the space evenly. Generates independent rooms and tries to connect them.
  * @augments ROT.Map.Dungeon
@@ -2456,6 +2820,7 @@ ROT.Map.Uniform.prototype.create = function(callback) {
 		this._rooms = [];
 		this._unconnected = [];
 		this._generateRooms();
+		if (this._rooms.length < 2) { continue; }
 		if (this._generateCorridors()) { break; }
 	}
 	
@@ -2772,10 +3137,10 @@ ROT.Map.Rogue = function(width, height, options) {
 	*/
 	
 	if (!this._options.hasOwnProperty("roomWidth")) {
-		this._options["roomWidth"] = this._calculateRoomSize(width, this._options["cellWidth"]);
+		this._options["roomWidth"] = this._calculateRoomSize(this._width, this._options["cellWidth"]);
 	}
 	if (!this._options.hasOwnProperty["roomHeight"]) {
-		this._options["roomHeight"] = this._calculateRoomSize(height, this._options["cellHeight"]);
+		this._options["roomHeight"] = this._calculateRoomSize(this._height, this._options["cellHeight"]);
 	}
 	
 }
@@ -3179,8 +3544,7 @@ ROT.Map.Rogue.prototype._createCorridors = function () {
 	}
 }
 /**
- * @class
- * Dungeon feature; has own .create() method
+ * @class Dungeon feature; has own .create() method
  */
 ROT.Map.Feature = function() {}
 ROT.Map.Feature.prototype.isValid = function(canBeDugCallback) {}
@@ -3286,6 +3650,7 @@ ROT.Map.Feature.Room.createRandom = function(availWidth, availHeight, options) {
 
 ROT.Map.Feature.Room.prototype.addDoor = function(x, y) {
 	this._doors[x+","+y] = 1;
+	return this;
 }
 
 /**
@@ -3296,10 +3661,29 @@ ROT.Map.Feature.Room.prototype.getDoors = function(callback) {
 		var parts = key.split(",");
 		callback(parseInt(parts[0]), parseInt(parts[1]));
 	}
+	return this;
 }
 
 ROT.Map.Feature.Room.prototype.clearDoors = function() {
 	this._doors = {};
+	return this;
+}
+
+ROT.Map.Feature.Room.prototype.addDoors = function(isWallCallback) {
+	var left = this._x1-1;
+	var right = this._x2+1;
+	var top = this._y1-1;
+	var bottom = this._y2+1;
+
+	for (var x=left; x<=right; x++) {
+		for (var y=top; y<=bottom; y++) {
+			if (x != left && x != right && y != top && y != bottom) { continue; }
+			if (isWallCallback(x, y)) { continue; }
+
+			this.addDoor(x, y);
+		}
+	}
+
 	return this;
 }
 
@@ -3636,7 +4020,7 @@ ROT.FOV = function(lightPassesCallback, options) {
 };
 
 /**
- * Compute visibility
+ * Compute visibility for a 360-degree circle
  * @param {int} x
  * @param {int} y
  * @param {int} R Maximum visibility radius
@@ -3696,7 +4080,7 @@ ROT.FOV.prototype._getCircle = function(cx, cy, r) {
 	return result;
 }
 /**
- * @class Discrete shadowcasting algorithm
+ * @class Discrete shadowcasting algorithm. Obsoleted by Precise shadowcasting.
  * @augments ROT.FOV
  */
 ROT.FOV.DiscreteShadowcasting = function(lightPassesCallback, options) {
@@ -3927,6 +4311,160 @@ ROT.FOV.PreciseShadowcasting.prototype._checkVisibility = function(A1, A2, block
 	return visibleLength/arcLength;
 }
 /**
+ * @class Recursive shadowcasting algorithm
+ * Currently only supports 4/8 topologies, not hexagonal.
+ * Based on Peter Harkins' implementation of Björn Bergström's algorithm described here: http://www.roguebasin.com/index.php?title=FOV_using_recursive_shadowcasting
+ * @augments ROT.FOV
+ */
+ROT.FOV.RecursiveShadowcasting = function(lightPassesCallback, options) {
+	ROT.FOV.call(this, lightPassesCallback, options);
+}
+ROT.FOV.RecursiveShadowcasting.extend(ROT.FOV);
+
+/** Octants used for translating recursive shadowcasting offsets */
+ROT.FOV.RecursiveShadowcasting.OCTANTS = [
+	[-1,  0,  0,  1],
+	[ 0, -1,  1,  0],
+	[ 0, -1, -1,  0],
+	[-1,  0,  0, -1],
+	[ 1,  0,  0, -1],
+	[ 0,  1, -1,  0],
+	[ 0,  1,  1,  0],
+	[ 1,  0,  0,  1]
+];
+
+/**
+ * Compute visibility for a 360-degree circle
+ * @param {int} x
+ * @param {int} y
+ * @param {int} R Maximum visibility radius
+ * @param {function} callback
+ */
+ROT.FOV.RecursiveShadowcasting.prototype.compute = function(x, y, R, callback) {
+	//You can always see your own tile
+	callback(x, y, 0, true);
+	for(var i = 0; i < ROT.FOV.RecursiveShadowcasting.OCTANTS.length; i++) {
+		this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[i], R, callback);
+	}
+}
+
+/**
+ * Compute visibility for a 180-degree arc
+ * @param {int} x
+ * @param {int} y
+ * @param {int} R Maximum visibility radius
+ * @param {int} dir Direction to look in (expressed in a ROT.DIR value);
+ * @param {function} callback
+ */
+ROT.FOV.RecursiveShadowcasting.prototype.compute180 = function(x, y, R, dir, callback) {
+	//You can always see your own tile
+	callback(x, y, 0, true);
+	var previousOctant = (dir - 1 + 8) % 8; //Need to retrieve the previous octant to render a full 180 degrees
+	var nextPreviousOctant = (dir - 2 + 8) % 8; //Need to retrieve the previous two octants to render a full 180 degrees
+	var nextOctant = (dir+ 1 + 8) % 8; //Need to grab to next octant to render a full 180 degrees
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[nextPreviousOctant], R, callback);
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[previousOctant], R, callback);
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[dir], R, callback);
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[nextOctant], R, callback);
+}
+
+/**
+ * Compute visibility for a 90-degree arc
+ * @param {int} x
+ * @param {int} y
+ * @param {int} R Maximum visibility radius
+ * @param {int} dir Direction to look in (expressed in a ROT.DIR value);
+ * @param {function} callback
+ */
+ROT.FOV.RecursiveShadowcasting.prototype.compute90 = function(x, y, R, dir, callback) {
+	//You can always see your own tile
+	callback(x, y, 0, true);
+	var previousOctant = (dir - 1 + 8) % 8; //Need to retrieve the previous octant to render a full 90 degrees
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[dir], R, callback);
+	this._renderOctant(x, y, ROT.FOV.RecursiveShadowcasting.OCTANTS[previousOctant], R, callback);
+}
+
+/**
+ * Render one octant (45-degree arc) of the viewshed
+ * @param {int} x
+ * @param {int} y
+ * @param {int} octant Octant to be rendered
+ * @param {int} R Maximum visibility radius
+ * @param {function} callback
+ */
+ROT.FOV.RecursiveShadowcasting.prototype._renderOctant = function(x, y, octant, R, callback) {
+	//Radius incremented by 1 to provide same coverage area as other shadowcasting radiuses
+	this._castVisibility(x, y, 1, 1.0, 0.0, R + 1, octant[0], octant[1], octant[2], octant[3], callback);
+}
+
+/**
+ * Actually calculates the visibility
+ * @param {int} startX The starting X coordinate
+ * @param {int} startY The starting Y coordinate
+ * @param {int} row The row to render
+ * @param {float} visSlopeStart The slope to start at
+ * @param {float} visSlopeEnd The slope to end at
+ * @param {int} radius The radius to reach out to
+ * @param {int} xx 
+ * @param {int} xy 
+ * @param {int} yx 
+ * @param {int} yy 
+ * @param {function} callback The callback to use when we hit a block that is visible
+ */
+ROT.FOV.RecursiveShadowcasting.prototype._castVisibility = function(startX, startY, row, visSlopeStart, visSlopeEnd, radius, xx, xy, yx, yy, callback) {
+	if(visSlopeStart < visSlopeEnd) { return; }
+	for(var i = row; i <= radius; i++) {
+		var dx = -i - 1;
+		var dy = -i;
+		var blocked = false;
+		var newStart = 0;
+
+		//'Row' could be column, names here assume octant 0 and would be flipped for half the octants
+		while(dx <= 0) {
+			dx += 1;
+
+			//Translate from relative coordinates to map coordinates
+			var mapX = startX + dx * xx + dy * xy;
+			var mapY = startY + dx * yx + dy * yy;
+
+			//Range of the row
+			var slopeStart = (dx - 0.5) / (dy + 0.5);
+			var slopeEnd = (dx + 0.5) / (dy - 0.5);
+		
+			//Ignore if not yet at left edge of Octant
+			if(slopeEnd > visSlopeStart) { continue; }
+			
+			//Done if past right edge
+			if(slopeStart < visSlopeEnd) { break; }
+				
+			//If it's in range, it's visible
+			if((dx * dx + dy * dy) < (radius * radius)) {
+				callback(mapX, mapY, i, true);
+			}
+	
+			if(!blocked) {
+				//If tile is a blocking tile, cast around it
+				if(!this._lightPasses(mapX, mapY) && i < radius) {
+					blocked = true;
+					this._castVisibility(startX, startY, i + 1, visSlopeStart, slopeStart, radius, xx, xy, yx, yy, callback);
+					newStart = slopeEnd;
+				}
+			} else {
+				//Keep narrowing if scanning across a block
+				if(!this._lightPasses(mapX, mapY)) {
+					newStart = slopeEnd;
+					continue;
+				}
+			
+				//Block has ended
+				blocked = false;
+				visSlopeStart = newStart;
+			}
+		}
+		if(blocked) { break; }
+	}
+}
+/**
  * @namespace Color operations
  */
 ROT.Color = {
@@ -4110,7 +4648,7 @@ ROT.Color = {
 		var l = color[2];
 
 		if (color[1] == 0) {
-			l *= 255;
+			l = Math.round(l*255);
 			return [l, l, l];
 		} else {
 			function hue2rgb(p, q, t) {
@@ -4536,6 +5074,18 @@ ROT.Path = function(toX, toY, passableCallback, options) {
 	for (var p in options) { this._options[p] = options[p]; }
 
 	this._dirs = ROT.DIRS[this._options.topology];
+	if (this._options.topology == 8) { /* reorder dirs for more aesthetic result (vertical/horizontal first) */
+		this._dirs = [
+			this._dirs[0],
+			this._dirs[2],
+			this._dirs[4],
+			this._dirs[6],
+			this._dirs[1],
+			this._dirs[3],
+			this._dirs[5],
+			this._dirs[7]
+		]
+	}
 }
 
 /**

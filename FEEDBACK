@@ -1,17 +1,13 @@
 ALERTS SUCK FOR FREQUENT EVENTS!
 
-Random part locations are breaking the level design
-	Remove random part systems
-	Replace with manually placing parts
-
-People have trouble differentiating space from Lukas
-	Fog of war
-
 Goblins overwhelm players
 	introduce goblins later	
 
 People endlessly lazer goblins
 	WONTFIX
+
+People have trouble differentiating space from Lukas
+	Fog of war
 
 Can get stuck in space on goblin collision
 
@@ -48,4 +44,8 @@ Floating off the map isn't fun
 
 Hard to tell when you're in space walk mode
 	Jet noise and music cues help
+
+Random part locations are breaking the level design
+	Remove random part systems
+	Replace with manually placing parts
 

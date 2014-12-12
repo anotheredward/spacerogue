@@ -4,14 +4,14 @@ var map_data = [
 
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,                            ,,,,,,,,,,,,,,,",
 	",###################################,                            ,#############,",
-	",#.......#.........#............p..#,                            ,#p..........#,",
+	",#@......#.........#............p..#,                            ,#p..........#,",
 	",#.......#.........#.##.##########..,                            ,............#,",
 	",#....####....#.......#.#........###,       ,,,                  ,#...........#,",
 	",#....#.......#.......#.#..........#,       ,#,                  ,#...........#,",
 	",#....#.......#.......#.#..........#,       ,,,                  ,##########.##,",
 	",#....#.......#.......#.#..........#,                    ,,,,    ,,,,,,,,,,,,,,,",
 	",#....#.......#.......#.#..........#,                   ,,##,                   ",
-	",#....#.......#.@.....#.#..........#,                   ,###,                   ",
+	",#....#.......#.......#.#..........#,                   ,###,                   ",
 	",#....###..############.########..##,                   ,,,,,                   ",
 	",#....#............................#,                                   ,,,,,,,,",
 	",#....#.............................,                                   ,###.##,",
@@ -297,7 +297,7 @@ var Game = (function () {
 			base.onFindPart = function(part) {
 				entities.splice(entities.indexOf(part), 1);
 				if (++partsFound >= partsCount) {
-					alert("All missing suit parts found, you win!");
+					alert("You win!");
 					engine.lock();
 					location.reload();
 				} else {
@@ -466,7 +466,8 @@ var Game = (function () {
 
 	var doesTileLetLightPass = function(x, y) {
 		//Defensive check, callback sometimes asks for negative indicies
-		if (!isPositionInsideMap(x,y))
+		//Reverted back to not using isPositionInsideMap for performance
+		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
 			return false;
 
 		return map[y][x] != tiles['#'];
@@ -474,7 +475,7 @@ var Game = (function () {
 
 	var drawWholeMap = function() {
 		display.clear();
-		var fov = new ROT.FOV.PreciseShadowcasting(doesTileLetLightPass);
+		var fov = new ROT.FOV.RecursiveShadowcasting(doesTileLetLightPass);
 
 		fov.compute(player.x(), player.y(), 50, drawTile);
 	};
