@@ -1,19 +1,8 @@
 ALERTS SUCK FOR FREQUENT EVENTS!
 
-Floating off the map isn't fun
-	Can't steps off railings straight off the edge of the map
-	Can throw yourself from far away
-	Scroll across empty space animation to replace annoying alert box
-
 Random part locations are breaking the level design
 	Remove random part systems
 	Replace with manually placing parts
-
-Space-walk is confusing
-	darth vader breathing noise
-
-People don't play more than once
-	Remove alerts from death
 
 People have trouble differentiating space from Lukas
 	Fog of war
@@ -27,6 +16,7 @@ People endlessly lazer goblins
 Can get stuck in space on goblin collision
 
 Too hard
+People don't play more than once
 
 DONE
 No one works out they can lazer
@@ -51,3 +41,11 @@ Alerts interrupt the flow of the game, forcing users to use the mouse
 
 Space-walk is confusing
 	Design levels so it's quite hard to fall off the map
+
+Floating off the map isn't fun
+	Can't steps off railings straight off the edge of the map
+	Can throw yourself from far away
+
+Hard to tell when you're in space walk mode
+	Jet noise and music cues help
+
