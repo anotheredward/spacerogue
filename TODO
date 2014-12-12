@@ -1,7 +1,5 @@
 BUGS:
  - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
-
-WONTFIX
  - Crashes surf sometimes
 
 Features:
