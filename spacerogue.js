@@ -49,11 +49,11 @@ var Game = (function () {
 	var engine = new ROT.Engine(scheduler);
 	var map = [];
 	var tiles = {
-		'#': { name: '#', walkable: false, ch: '#' },
-		'.': { name: '.', walkable: true, ch: '.'},
-		' ': { name: ' ', walkable: true, slide: true, ch: ' '},
-		',': { name: ',', walkable: true, ch: '.'},
-		'*': { name: '*', walkable: true, slide: true, ch: '*', col: '#066'},
+		'#': { name: '#', walkable: false, ch: '#', inside: true },
+		'.': { name: '.', walkable: true, ch: '.', inside: true },
+		' ': { name: ' ', walkable: true, ch: ' ', inside: false, slide: true },
+		',': { name: ',', walkable: true, ch: '.', inside: true },
+		'*': { name: '*', walkable: true, ch: '*', col: '#066', inside: false, slide: true },
 	};
 
 	var enemies = [];
@@ -317,12 +317,12 @@ var Game = (function () {
 			};
 
 			base.onMove = function(x,y) {
-				if (map[y][x] == tiles[',']) {
+				if (!map[y][x].inside) {
 					if (document.getElementById('music').volume > 0)
 						document.getElementById('pressure').play();
 					document.getElementById('music').volume = 0;
 				}
-				if (map[y][x] == tiles['.']) {
+				else {
 					document.getElementById('music').volume = 1;
 				}
 			};
