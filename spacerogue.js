@@ -334,7 +334,7 @@ var Game = (function () {
 					engine.lock();
 					location.reload();
 				} else {
-					alert("Found missing suit part " + partsFound + " out of " + parts.count + "!");
+					document.getElementById("partsLeft").innerHTML = parts.count - partsFound;
 				}
 			}
 
@@ -498,6 +498,7 @@ var Game = (function () {
 		loadMap(map_data);
 		sparkle.act();
 		parts.init();
+		document.getElementById("partsLeft").innerHTML = parts.count;
 		drawWholeMap();
 		scheduler.add(player, true);
 		scheduler.add(sparkle, true);
