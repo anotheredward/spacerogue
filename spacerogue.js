@@ -187,7 +187,7 @@ var Game = (function () {
 	})();
 
 	var tileWalkable = function(x, y, who) {
-		if (!map[y] || !map[y][x])
+		if (!isPositionInsideMap(x,y))
 			return false;
 
 		if (!map[y][x].walkable)
@@ -210,11 +210,8 @@ var Game = (function () {
 		return null;
 	}
 
-	var isPositionOutsideMap = function(x,y) {
-		return x < 0
-			|| x >= MAP_WIDTH
-			|| y < 0
-			|| y >= MAP_HEIGHT;
+	var isPositionInsideMap = function(x,y) {
+		return map[y] && map[y][x];
 	}
 
 	var makeEntity = (function (x, y, ch, col) {
@@ -242,9 +239,12 @@ var Game = (function () {
 		var move = function (dir) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
-			if (isPositionOutsideMap(new_x,new_y)) {
+			if (!isPositionInsideMap(new_x,new_y)) {
+				console.log(x,y);
+				if (map[y][x].slide)
 					if (this.onExitMap)
 						this.onExitMap();
+				return false;
 			}	
 
 			if (tileWalkable(new_x, new_y)) {
@@ -259,6 +259,8 @@ var Game = (function () {
 					this.onMove(new_x, new_y);
 				return true;
 			}
+
+			return false;
 		};
 
 		return {
@@ -360,7 +362,7 @@ var Game = (function () {
 			return base;
 	})(1, 1);
 
-	var lazer = (function(x, y, dir) {
+	var lazer = function(x, y, dir) {
 		var sprite = dir.x == 0 ? '|' :
 			dir.y == 0 ? '-' :
 			dir.x.sign() == dir.y.sign() ? '\\' :
@@ -380,7 +382,7 @@ var Game = (function () {
 				}
 				else {
 					//Wall collision, walls should probably be entities of some sort
-					if (!isPositionOutsideMap(new_x,new_y))
+					if (isPositionInsideMap(new_x,new_y))
 						map[new_y][new_x] = tiles['.'];
 				}
 				for (var i=0; i < entities.length; i++) {
@@ -392,7 +394,7 @@ var Game = (function () {
 		};
 
 		return base;
-	});
+	};
 
 	var makeEnemy = (function (x, y) {
 		var base = makeEntity(x, y, 'g', '#f00');
@@ -464,21 +466,21 @@ var Game = (function () {
 	};
 
 	var drawTile = function(x, y) {
-		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
+		if (!isPositionInsideMap(x,y))
 			return false;
 
-			var possibleEntity = getEntityAtPosition(x, y);
-			if (possibleEntity)
-				possibleEntity.draw();
-			else {
-				var tile = map[y][x];
-				display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
-			}
+		var possibleEntity = getEntityAtPosition(x, y);
+		if (possibleEntity)
+			possibleEntity.draw();
+		else {
+			var tile = map[y][x];
+			display.draw(x, y, tile.ch, tile.col || '#ccc', tile.bg || '#000');
+		}
 	}
 
 	var doesTileLetLightPass = function(x, y) {
 		//Defensive check, callback sometimes asks for negative indicies
-		if (y < 0 || x < 0 || y >= MAP_HEIGHT || x >= MAP_WIDTH)
+		if (!isPositionInsideMap(x,y))
 			return false;
 
 		return map[y][x] != tiles['#'];
