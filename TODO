@@ -1,6 +1,8 @@
 BUGS:
- - Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
  - Crashes surf sometimes
+
+CHORES
+ - invert walkable -> solid, modify visibility to use this
 
 Features:
 Potential features
@@ -28,6 +30,7 @@ v1
    o Collecting all suit parts wins game
    o Suit parts are at spawned randomly
 
+- Architecture needs rethinking. Too many abstraction boundaries between classes and their parents.
 Thoughts on entities in the game: 
 	The current core of an entity is which mode it is in
 	Modes decide behaviour, how it draws, how it affects others
