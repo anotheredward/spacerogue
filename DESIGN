@@ -1,5 +1,5 @@
 21/04/2013
-What' the most fun for the least effort
+What's the most fun for the least effort?
 Implementing the verbs, the most cohesive actions/items(one with the most interesting interactions)
 But with the least dependencies, eg: Not doors because they depend on air pressure/power 
 Features that work well with what the game has currently, but don't require other new systems to exist, small steps
@@ -17,3 +17,14 @@ Meta:
 Unlock items, traits, areas after every game
 
 Mouse as interface, but keyboard is the primary input method
+
+LEVEL DESIGN
+Small corridors: 2 high, 4 wide
+Vents: 1 wide
+Big room/Maze area
+Space platforms, very open, small
+Pokemon-style single doors to other platforms
+5 space doors, 3 centre spaces without railings
+Reveals around corners are awesome
+Put doors in centre of walls
+Square platforms make more sense, clear lines between space and platform
