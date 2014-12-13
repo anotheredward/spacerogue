@@ -4,25 +4,11 @@ Can get stuck in space on goblin collision
 Remove all alerts
 	Death Alert
 		scrolling through space animation
-	Win Screen
-		ASCII ART THUMBS UP, RESET
-   _
- ( ((
-  \ =\
- __\_ `-\ 
-(____))(  \-----
-(____)) _  YOU DIDN'T DIE.  
-(____))    CONGRATS.
-(____))____/----
-
-http://www.afn.org/~afn39695/chatsurf.htm
-
 Step counter? 
 
 WONTFOX
 People have trouble differentiating space from Lukas
 	Fog of war
-
 
 DONE
 No one works out they can lazer
@@ -65,4 +51,25 @@ Goblins overwhelm players
 ALERTS SUCK FOR FREQUENT EVENTS!
 	Made falling out the map uncommon
 	Replaced part alerts with legend updates
+
+
+Win Screen
+	ASCII ART THUMBS UP, RESET
+   _
+ ( ((
+  \ =\
+ __\_ `-\ 
+(____))(  \-----
+(____)) _  YOU DIDN'T DIE.  
+(____))    CONGRATS.
+(____))____/----
+
+http://www.afn.org/~afn39695/chatsurf.htm
+
+Flying out map off an unpredictable edge isn't fun
+	Make platform edges line up as much as possible to avoid off by 1 errors
+
+tunnel walls can be destroyed and you can get jammed on the opposite wall when trying to get the part
+	Remove tunnel :(
+
 
