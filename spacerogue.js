@@ -297,9 +297,9 @@ var Game = (function () {
 			base.onFindPart = function(part) {
 				entities.splice(entities.indexOf(part), 1);
 				if (++partsFound >= partsCount) {
-					document.getElementById('win').style = "display:block;";
-					document.getElementById('display').style = "display:none;";
-					document.getElementById('legend').style = "display:none;";
+					document.getElementById('win').style.display = 'block';
+					document.getElementById('display').style.display = 'none';
+					document.getElementById('legend').style.display = 'none';
 					engine.lock();
 				} else {
 					document.getElementById("partsLeft").innerHTML = partsCount - partsFound;

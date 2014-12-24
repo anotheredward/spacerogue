@@ -1,6 +1,3 @@
-Game jams when you collect all the parts
-	fix bug
-
 Didn't realize they had collected parts
 	change part count to 2/4
 
@@ -80,4 +77,5 @@ Flying out map off an unpredictable edge isn't fun
 tunnel walls can be destroyed and you can get jammed on the opposite wall when trying to get the part
 	Remove tunnel :(
 
-
+Game jams when you collect all the parts
+	fix bug
