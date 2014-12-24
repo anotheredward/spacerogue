@@ -1,20 +1,19 @@
-Didn't realize they had collected parts
-	change part count to 2/4
-
 oggs don't play in Safari
 	mp3
-
-Can get stuck in space on goblin collision
-	Loss condition, goblin death cuddle
-	Try a bounce?
 
 Players don't continue to play after death alert, breaks flow of game, discourages restart
 		scrolling through space animation
 
+Convert Repo in to a github page
+	add url
+	write blog post
 
 WONTFOX
 People have trouble differentiating space from Lukas
 	Fog of war
+
+Didn't realize they had collected parts
+	change part count to 2/4
 
 DONE
 No one works out they can lazer
@@ -79,3 +78,7 @@ tunnel walls can be destroyed and you can get jammed on the opposite wall when t
 
 Game jams when you collect all the parts
 	fix bug
+
+Can get stuck in space on goblin collision
+	Added Loss condition, goblin death cuddle
+	Decided against bounce to retain difficulty, will playtest more

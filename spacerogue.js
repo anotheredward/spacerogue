@@ -210,7 +210,16 @@ var Game = (function () {
 					if (this.onExitMap)
 						this.onExitMap();
 				return false;
-			}	
+			}
+
+			var potentialEnemy = getEntityAtPosition(new_x, new_y);
+			if (potentialEnemy) {
+				if (potentialEnemy.isEnemy) {
+					if (this.onHitGoblin) {
+						this.onHitGoblin();
+					}
+				}
+			}
 
 			if (tileWalkable(new_x, new_y)) {
 				var potentialPart = getEntityAtPosition(new_x,new_y);
@@ -306,6 +315,14 @@ var Game = (function () {
 				}
 			}
 
+			base.onHitGoblin = function() {
+				if (map[base.y()][base.x()].slide) {
+					alert("Goblin Death Cuddle. Game Over.");
+					engine.lock();
+					location.reload();
+				}
+			}
+
 			base.onExitMap = function() {
 				alert("You spin out in to space, accelerating endlessly. Game Over.");
 				engine.lock();
@@ -377,6 +394,7 @@ var Game = (function () {
 		var base = makeEntity(x, y, 'g', '#f00');
 		var turns_until_move = 0;
 		var state = "hunting";
+		base.isEnemy = true;
 
 		base.onLazered = function() { 
 			turns_until_move = 5;
