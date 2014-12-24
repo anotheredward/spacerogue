@@ -1,10 +1,19 @@
+Game jams when you collect all the parts
+	fix bug
+
+Didn't realize they had collected parts
+	change part count to 2/4
+
+oggs don't play in Safari
+	mp3
+
 Can get stuck in space on goblin collision
 	Loss condition, goblin death cuddle
+	Try a bounce?
 
-Remove all alerts
-	Death Alert
+Players don't continue to play after death alert, breaks flow of game, discourages restart
 		scrolling through space animation
-Step counter? 
+
 
 WONTFOX
 People have trouble differentiating space from Lukas
@@ -51,7 +60,6 @@ Goblins overwhelm players
 ALERTS SUCK FOR FREQUENT EVENTS!
 	Made falling out the map uncommon
 	Replaced part alerts with legend updates
-
 
 Win Screen
 	ASCII ART THUMBS UP, RESET
