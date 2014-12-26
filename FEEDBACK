@@ -2,10 +2,9 @@ oggs don't play in Safari
 	mp3
 
 Players don't continue to play after death alert, breaks flow of game, discourages restart
-		scrolling through space animation
+	scrolling through space animation
 
-Convert Repo in to a github page
-	add url
+no one knows about the game
 	write blog post
 
 WONTFOX
@@ -82,3 +81,9 @@ Game jams when you collect all the parts
 Can get stuck in space on goblin collision
 	Added Loss condition, goblin death cuddle
 	Decided against bounce to retain difficulty, will playtest more
+
+Convert Repo in to a github page
+	add url
+
+Didn't notice object
+	remove @ you to make the text the first item
