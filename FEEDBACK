@@ -7,9 +7,6 @@ Players don't continue to play after death alert, breaks flow of game, discourag
 no one knows about the game
 	write blog post
 
-players stop playing after they get "Goblin Death Cuddle"'d
-	make character bounce instead
-
 WONTFOX
 People have trouble differentiating space from Lukas
 	Fog of war
@@ -33,7 +30,7 @@ Players often get stuck in a pile of goblins
 
 Hanging off platforms is confusing
 	repace invisible hanging off platforms with visible .s
-	remove commas from large jump gaps to encourage jumping 
+	remove commas from large jump gaps to encourage jumping
 
 Alerts interrupt the flow of the game, forcing users to use the mouse
 	Replace alerts with counter in parts legend
@@ -53,7 +50,7 @@ Random part locations are breaking the level design
 	Replace with manually placing parts
 
 Goblins overwhelm players
-	introduce goblins later	
+	introduce goblins later
 
 ALERTS SUCK FOR FREQUENT EVENTS!
 	Made falling out the map uncommon
@@ -64,9 +61,9 @@ Win Screen
    _
  ( ((
   \ =\
- __\_ `-\ 
+ __\_ `-\
 (____))(  \-----
-(____)) _  YOU DIDN'T DIE.  
+(____)) _  YOU DIDN'T DIE.
 (____))    CONGRATS.
 (____))____/----
 
@@ -90,3 +87,7 @@ Convert Repo in to a github page
 
 Didn't notice object
 	remove @ you to make the text the first item
+
+
+players stop playing after they get "Goblin Death Cuddle"'d
+	make character bounce instead

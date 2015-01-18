@@ -29,12 +29,6 @@ var map_data = [
 	",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,        ,#,       ,##,,,,,,,,,  ,#.....p...",
 ];
 
-var Util = {
-	clamp: function(val, min, max) {
-		return val < min ? min : val > max ? max : val;
-	},
-};
-
 Number.prototype.sign = function() {
 	return this > 0 ? 1 :
 				 this < 0 ? -1 :
@@ -61,13 +55,13 @@ var Game = (function () {
 	var entities = [];
 
 	/* Usage: waitForKey(handler[, timeout, timeoutCb])
-	 *   handler - a function that gets keypress events and does something with 
-	 *     them. It returns whether the keypress was one it cared about (ie 
+	 *   handler - a function that gets keypress events and does something with
+	 *     them. It returns whether the keypress was one it cared about (ie
 	 *     should waitForKey stop now).
-	 *   timeout - maximum time in milliseconds to wait for input. If no input 
+	 *   timeout - maximum time in milliseconds to wait for input. If no input
 	 *     that handler cares about has been received in that time, timeoutCb
-	 *     is called with no arguments, and waitForKey stops. 
-	 *  waitForKey can be called from inside the handler, but must be immediately 
+	 *     is called with no arguments, and waitForKey stops.
+	 *  waitForKey can be called from inside the handler, but must be immediately
 	 *  followed by return true; ie you can't decide whether to accept a keypress
 	 *  based on another keypress.
 	 */
@@ -194,11 +188,11 @@ var Game = (function () {
 		};
 
 		var setColor = function (col) {
-			color = col; 
+			color = col;
 		};
 
 		var setChar = function (ch) {
-			character = ch; 
+			character = ch;
 		};
 
 		var setLastDir = function(x,y) {
@@ -256,7 +250,7 @@ var Game = (function () {
 
 	var player = (function (x, y) {
 			var base = makeEntity(x, y);
-			
+
 			var partsFound = 0;
 
 			var move_key = {};
@@ -275,7 +269,7 @@ var Game = (function () {
 				var sliding = map[base.y()][base.x()].slide;
 
 				var timeout = !(sliding || REALTIME) ? null : 300;
-				var timeoutCb = !sliding ? null 
+				var timeoutCb = !sliding ? null
 						: function () { base.move(base.last_dir()); };
 
 				waitForKey(function (e) {
@@ -342,7 +336,7 @@ var Game = (function () {
 					if (map[base.y()][base.x()].slide)
 						base.move(base.last_dir());
 					return true;
-				} 
+				}
 				return false;
 			}
 
@@ -387,7 +381,7 @@ var Game = (function () {
 					if (entities[i].x == base.x && entities[i].y == base.y)
 						entities.splice(i,1);
 				}
-				scheduler.remove(base);	
+				scheduler.remove(base);
 			}
 		};
 
@@ -400,7 +394,7 @@ var Game = (function () {
 		var state = "hunting";
 		base.isEnemy = true;
 
-		base.onLazered = function() { 
+		base.onLazered = function() {
 			turns_until_move = 5;
 			base.setDisplayStunned();
 			state = "stunned";
@@ -416,7 +410,7 @@ var Game = (function () {
 				var xdiff = player.x() - base.x();
 				var ydiff = player.y() - base.y();
 
-				if (!base.move({x: xdiff.sign(), y: ydiff.sign()})) 
+				if (!base.move({x: xdiff.sign(), y: ydiff.sign()}))
 					if (!base.move({x: 0, y: ydiff.sign()}))
 						base.move({x: xdiff.sign(), y: 0});
 				turns_until_move++;
@@ -430,12 +424,12 @@ var Game = (function () {
 			}
 		};
 
-		base.setDisplayStunned = function () { 
+		base.setDisplayStunned = function () {
 			base.setColor("blue");
 			base.setChar(turns_until_move.toString());
 		};
-		
-		base.setDisplayDefault = function () { 
+
+		base.setDisplayDefault = function () {
 			base.setColor("#f00");
 			base.setChar("g");
 		};
