@@ -85,6 +85,7 @@ var Game = (function () {
 		};
 
 		var listener = function (e) {
+			e.preventDefault();
 			if (callback(e)) {
 				pop();
 			}
