@@ -199,8 +199,12 @@ var Game = (function () {
 
 		var setChar = function (ch) {
 			character = ch; 
-
 		};
+
+		var setLastDir = function(x,y) {
+			last_dir = { x: x, y: y};
+		};
+
 		var move = function (dir) {
 			var new_x = x + (dir.x || 0);
 			var new_y = y + (dir.y || 0);
@@ -244,6 +248,7 @@ var Game = (function () {
 			x: function () { return x; },
 			y: function () { return y; },
 			last_dir: function () { return last_dir; },
+			setLastDir: setLastDir,
 			setColor: setColor,
 			setChar: setChar,
 		};
@@ -317,9 +322,8 @@ var Game = (function () {
 
 			base.onHitGoblin = function() {
 				if (map[base.y()][base.x()].slide) {
-					alert("Goblin Death Cuddle. Game Over.");
-					engine.lock();
-					location.reload();
+					var lastDir = base.last_dir();
+					base.setLastDir(-lastDir.x, -lastDir.y);
 				}
 			}
 
@@ -521,5 +525,4 @@ var Game = (function () {
 		init: init,
 		drawWholeMap: drawWholeMap
 	};
-})();;
-
+})();
