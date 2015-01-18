@@ -16,17 +16,20 @@
 	</head>
 	<body onload="Game.init()">
 		<h1>SpaceRogue</h1>
-		<pre id="win" style="display:none;">
-		   _
-		 ( ((
-		  \ =\
-		 __\_ `-\
-		(____))(  \-----
-		(____)) _  YOU DIDN'T DIE.
-		(____))    CONGRATS.
-		(____))____/----
-
-		</pre>
+		<div id="win" style="display:none;">
+			<pre>
+   _
+ ( ((
+  \ =\
+ __\_ `-\
+(____))(  \-----
+(____)) _  YOU DIDN'T DIE.
+(____))    CONGRATS.
+(____))____/----
+			</pre>
+			<p>a game by lukas and edward</p>
+			<a href=".">play again?</a>
+		</div>
 		<div id="display" style="float:left;"></div>
 		<div id="legend">
 		<p style="color:yellow;">collect <span id="partsLeft"></span> (p)arts
