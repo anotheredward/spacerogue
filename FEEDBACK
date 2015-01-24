@@ -1,6 +1,3 @@
-oggs don't play in Safari
-	mp3
-
 Players don't continue to play after death alert, breaks flow of game, discourages restart
 	scrolling through space animation
 
@@ -88,6 +85,8 @@ Convert Repo in to a github page
 Didn't notice object
 	remove @ you to make the text the first item
 
-
 players stop playing after they get "Goblin Death Cuddle"'d
 	make character bounce instead
+
+oggs don't play in Safari
+	mp3
