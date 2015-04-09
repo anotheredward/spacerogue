@@ -1,8 +1,26 @@
+Lazer command not found by experienced roguelike players
+	move z command to top of instructions
+
+Players fell off the level a surprising amount
+	Wrap level
+
+New Players don't imagine the setting as vividly as experience players
+	Intro?
+	More sounds?
+
+Timer is hard to see
+	change to blue background, keep the red text
+
+Players think the game is frozen when they're in lazer mode
+	Add a mode prompt
+
 Players don't continue to play after death alert, breaks flow of game, discourages restart
+	text encouraging the player to try again
 	scrolling through space animation
 
 re-enable double goblin death cuddle
-	auto-restart
+	Squeeze players out at a 90' angle if possible, if in space
+	still need condition for 4 way goblin death cuddle
 
 no one knows about the game
 	write blog post
