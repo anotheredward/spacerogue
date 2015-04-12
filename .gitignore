@@ -1,1 +1,4 @@
 config.codekit
+node_modules/
+min/
+npm-debug.log
