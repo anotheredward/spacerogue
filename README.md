@@ -3,4 +3,4 @@ SpaceRogue
 
 A roguelike, in SPAAAACE. 
 
-Play at: http://ebrobinson.github.io/spacerogue/
+Play at: http://anotheredward.github.io/spacerogue/
